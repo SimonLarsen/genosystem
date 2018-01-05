@@ -1,0 +1,4 @@
+name: Poison
+type: token
+active:
+    - hit self 1
