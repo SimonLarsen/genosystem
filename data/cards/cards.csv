@@ -1,0 +1,9 @@
+id,name,token,tag,buy,scrap,active,reactive,description
+blank,Blank,TRUE,,0,0,,,
+poison,Poison,TRUE,,0,0,self hit 1,,
+strike1,Strike,,,100,150,target hit 1,,
+strike2,Power strike,,,150,200,target hit 2,,
+shield1,Shield,,,250,250,target deal 1 shield to hand,,
+infect1,Infect,,,200,250,target deal 1 poison to hand,,
+infect2,Infect 2,,,300,350,target deal 2 poison to hand,,
+recover1,Recover,,,123,345,self draw 1,,
