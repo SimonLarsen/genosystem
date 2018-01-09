@@ -1,0 +1,6 @@
+[submodule "prox"]
+	path = prox
+	url = https://github.com/SimonLarsen/prox.git
+[submodule "LuLPeg"]
+	path = LuLPeg
+	url = https://github.com/pygy/LuLPeg.git
