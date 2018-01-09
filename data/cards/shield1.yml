@@ -1,4 +1,0 @@
-name: Shield 1
-type: conjure
-active:
-    - deal shield target hand 1

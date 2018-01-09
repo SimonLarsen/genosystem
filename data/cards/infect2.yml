@@ -1,4 +1,0 @@
-name: Infect 2
-type: infect
-active:
-    - deal poison target hand 2

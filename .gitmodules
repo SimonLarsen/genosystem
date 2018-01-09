@@ -4,3 +4,9 @@
 [submodule "LuLPeg"]
 	path = LuLPeg
 	url = https://github.com/pygy/LuLPeg.git
+[submodule "lua-csv"]
+	path = lua-csv
+	url = https://github.com/geoffleyland/lua-csv.git
+[submodule "luafun"]
+	path = luafun
+	url = https://github.com/luafun/luafun.git
