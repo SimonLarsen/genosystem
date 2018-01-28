@@ -7,7 +7,7 @@ local Parser = require("cards.Parser")
 
 function prox.load()
     prox.window.set(640, 360, true, 2, false, "scale")
-    local parser = Parser()
+    parser = Parser()
     --cards = parser:readCards("data/cards.csv")
 end
 

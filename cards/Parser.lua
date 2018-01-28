@@ -1,5 +1,7 @@
 local Card = require("cards.Card")
 local Action = require("cards.Action")
+local Condition = require("cards.Condition")
+local ConditionalAction = require("cards.ConditionalAction")
 
 local Parser = class("cards.Parser")
 
@@ -17,9 +19,9 @@ local function parseEffects()
     return effects
 end
 
-local function totable(...)
-    return {...}
-end
+local function tobool(x) return x == "true" end
+
+local function totable(...) return {...} end
 
 local function toobj(cl)
     return function(...) return cl(...) end
@@ -36,26 +38,38 @@ end
 function Parser:buildGrammar()
     local lpeg = require("LuLPeg.lulpeg")
     lpeg.locale(lpeg)
+    local P, V = lpeg.P, lpeg.V
 
     local effects = parseEffects()
 
-    local ows = lpeg.space^0
-    local ws = lpeg.space^1
+    local OWS = lpeg.space^0
+    local WS = lpeg.space^1
+    local PAREN = function(x)
+        return OWS * "(" *OWS* x *OWS* ")" * OWS
+    end
 
-    local comma = ows * "," * ows
+    local comma = OWS * "," * OWS
+    local bool = (P"true" + "false") / tobool
     local str = lpeg.alpha * lpeg.alnum^0 / tostring
     local number = lpeg.digit^1 / tonumber
-    local arg = number + str
-    local target = (lpeg.P("self") + lpeg.P("target") + lpeg.P("party") + lpeg.P("enemies")) / tostring
+    local arg = bool + number + str
+    local target = (P"self" + "target" + "party" + "enemies") / tostring
+    local op = (P">" + "<" + ">=" + "<=" + "==" + "!=") / tostring
 
-    local effect = str * (ws * arg)^0 / toeffect(effects)
+    local effect = str * (WS * arg)^0 / toeffect(effects)
 
     local effect_list = effect / totable +
-                        lpeg.P("(") * ows * effect * (comma * effect)^0 * ows * ")" / totable
+                        PAREN(effect * (comma * effect)^0) / totable
 
-    local action = target * ws * effect_list / toobj(Action)
+    local action = OWS * target *WS* effect_list * OWS / toobj(Action)
+    local condition = OWS * str *WS* op *WS* arg * OWS / toobj(Condition)
 
-    local body = ows * action * (comma * action)^0 * ows / totable
+    local body = lpeg.P{
+        "body",
+        statement = action +
+                    P"if" * PAREN(condition) * PAREN(V"body") * ((OWS* "else" * PAREN(V"body"))^-1) / toobj(ConditionalAction),
+        body = OWS * V"statement" * (comma * V"statement")^0 * OWS / totable
+    }
 
     return body * -1
 end
