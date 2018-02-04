@@ -1,3 +1,6 @@
+--- Card effect description parser
+-- @classmod cards.Parser
+
 local Card = require("cards.Card")
 local Action = require("cards.Action")
 local Condition = require("cards.Condition")
@@ -31,10 +34,18 @@ local function toeffect(effects)
     return function(id, ...) return effects[id](...) end
 end
 
+local function toboolean(s)
+    s = string.lower(s)
+    return s == "true" or s == "1" or s == "yes"
+end
+
+--- Constructor.
 function Parser:initialize()
     self.grammar = self:buildGrammar()
 end
 
+--- Builds and returns the LPeg grammar.
+-- @return LPeg parser for card effect descriptions
 function Parser:buildGrammar()
     local lpeg = require("LuLPeg.lulpeg")
     lpeg.locale(lpeg)
@@ -74,6 +85,9 @@ function Parser:buildGrammar()
     return body * -1
 end
 
+--- Parse a card effect description.
+-- @param s (string) Card effect description.
+-- @return Description as an @{cards.Action} tree
 function Parser:parse(s)
     if prox.string.trim(s) == "" then
         return {}
@@ -84,11 +98,9 @@ function Parser:parse(s)
     end
 end
 
-local function toboolean(s)
-    s = string.lower(s)
-    return s == "true" or s == "1" or s == "yes"
-end
-
+--- Parses cards from a CSV file database.
+-- @param path (string) Path to CSV file
+-- @return A table of parsed cards
 function Parser:readCards(path)
     local csv = require("lua-csv.lua.csv")
 

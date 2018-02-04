@@ -1,3 +1,6 @@
+--- Card effect dealing token cards
+-- @classmod cards.effects.Deal
+
 local Deal = class("cards.effects.Deal")
 
 function Deal:initialize(count, card, pile)

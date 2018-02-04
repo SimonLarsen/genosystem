@@ -1,5 +1,6 @@
 --- Card description class.
 -- @classmod cards.Card
+
 local Card = class("cards.Card")
 
 function Card:initialize(name, token, tag, buy, scrap, active, reactive, description)

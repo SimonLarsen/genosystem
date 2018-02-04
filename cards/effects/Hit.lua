@@ -1,3 +1,6 @@
+--- Card effect dealing damage
+-- @classmod cards.effects.Hit
+
 local Hit = class("cards.effects.Hit")
 
 function Hit:initialize(count)

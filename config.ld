@@ -4,3 +4,4 @@ file = {"battle","cards"}
 format = "discount"
 dir = "doc"
 readme = "README.md"
+style = "ldoc"
