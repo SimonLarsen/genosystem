@@ -6,4 +6,13 @@ function ConditionalAction:initialize(condition, ifaction, elseaction)
     self.elseaction = elseaction
 end
 
+function ConditionalAction:apply(variables, events)
+    if self.condition:evaluate(variables) then
+        self.ifaction:apply(variables, events)
+    else if self.elseaction then
+        self.elseaction:apply(variables, events)
+    end
+    return events
+end
+
 return ConditionalAction

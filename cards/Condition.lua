@@ -15,7 +15,7 @@ function Condition:initialize(variable, op, value)
     self.value = value
 end
 
-function Condition:eval(vars)
+function Condition:evaluate(vars)
     local var = vars[self.variable]
     return self.op(var, self.value)
 end
