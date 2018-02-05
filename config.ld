@@ -1,7 +1,10 @@
 project = "geno:system"
 title = "geno:system documentation"
+description = "A deck building RPG"
 file = {"battle","cards"}
 format = "discount"
 dir = "doc"
 readme = "README.md"
 style = "ldoc"
+template = "ldoc"
+no_space_before_args = true
