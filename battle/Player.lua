@@ -2,6 +2,10 @@
 -- @classmod battle.Player
 local Player = class("battle.Player")
 
+local HAND_SIZE = 5
+
+--- Constructor.
+-- @param deck Player deck. Table of @{cards.Card} objects
 function Player:initialize(deck)
     self.hand = {}
     self.discard = {}
@@ -9,21 +13,23 @@ function Player:initialize(deck)
     self.deck = prox.table.copy(deck)
 
     prox.table.shuffle(self.deck)
+
+    for i=1,HAND_SIZE do
+        self:draw()
+    end
 end
 
 --- Draw a card from deck.
--- @param n Number of cards to draw
-function Player:draw(n)
-    for i = 1,n do
-        if #self.deck == 0 then
-            self:shuffle()
-        end
-        if #self.deck == 0 then
-            break
-        end
-        table.insert(self.hand, self.deck[1])
-        table.remove(self.deck, 1)
+function Player:draw()
+    if #self.deck == 0 then
+        self:shuffle()
     end
+    if #self.deck == 0 then
+        return false
+    end
+    table.insert(self.hand, self.deck[1])
+    table.remove(self.deck, 1)
+    return true
 end
 
 --- Discard a card from hand.
@@ -44,12 +50,12 @@ end
 
 --- Play card in hand.
 -- @param i Index of card to play
--- @param targets Table of target lists
+-- @param cards Database of @{cards.Card} instances
 -- @param variables Table of current battle variables
 -- @param events (Output) Table to return events.
-function Player:playCard(i, targets, variables, events)
+function Player:playCard(i, cards, variables, events)
     assert(i >= 1 and i <= #self.hand, "Card index out of range")
-    self.hand[i]:play(targets, variables, events)
+    cards[self.hand[i].id]:play(variables, events)
     return events
 end
 

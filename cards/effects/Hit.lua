@@ -11,10 +11,8 @@ function Hit:getType()
     return "hit"
 end
 
-function Hit:apply(targets)
-    for i,v in ipairs(targets) do
-        v:damage(self.count)
-    end
+function Hit:apply(target)
+    target:damage(self.count)
 end
 
 return Hit

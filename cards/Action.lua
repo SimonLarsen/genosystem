@@ -16,7 +16,7 @@ end
 -- @param events Event queue
 -- @return The event queue
 function Action:apply(variables, events)
-    for i,v in ipairs(self.effets) do
+    for i,v in ipairs(self.effects) do
         table.insert(events, v)
     end
     return events

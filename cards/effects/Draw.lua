@@ -11,4 +11,10 @@ function Draw:getType()
     return "draw"
 end
 
+function Draw:apply(target)
+    for i=1,self.count do
+        target:draw()
+    end
+end
+
 return Draw

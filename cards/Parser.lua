@@ -100,7 +100,7 @@ end
 
 --- Parses cards from a CSV file database.
 -- @param path (string) Path to CSV file
--- @return A table of parsed cards
+-- @return A table mapping card IDs to @{cards.Card} instances.
 function Parser:readCards(path)
     local csv = require("lua-csv.lua.csv")
 
@@ -108,6 +108,7 @@ function Parser:readCards(path)
     local cards = {}
     for e in f:lines() do
         local c = Card(
+            e.id,
             e.name,
             toboolean(e.token),
             e.tag,
@@ -115,9 +116,10 @@ function Parser:readCards(path)
             tonumber(e.scrap),
             self:parse(e.active),
             self:parse(e.reactive),
-            self.description
+            e.text,
+            e.description
         )
-        table.insert(cards, c)
+        cards[e.id] = c
     end
     return cards
 end

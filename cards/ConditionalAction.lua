@@ -20,7 +20,7 @@ end
 function ConditionalAction:apply(variables, events)
     if self.condition:evaluate(variables) then
         self.ifaction:apply(variables, events)
-    else if self.elseaction then
+    elseif self.elseaction then
         self.elseaction:apply(variables, events)
     end
     return events

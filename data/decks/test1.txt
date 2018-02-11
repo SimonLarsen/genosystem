@@ -1,0 +1,3 @@
+strike1 10
+strike2 3
+recover1 2
