@@ -41,24 +41,24 @@ end
 
 --- Execute card's active effects.
 -- @param variables Table of current battle variables
--- @param events (Output) Table to return events.
--- @return Table of events
-function Card:play(variables, events)
+-- @param effects (Output) Table to return effects.
+-- @return Table of effects
+function Card:play(variables, effects)
     for i,v in ipairs(self.active) do
-        v:apply(variables, events)
+        v:apply(variables, effects)
     end
-    return events
+    return effects
 end
 
 --- Execute card's reactive effects.
 -- @param variables Table of current battle variables
--- @param events (Output) Table to return events.
--- @return Table of events
-function Card:react(variables, events)
+-- @param effects (Output) Table to return effects.
+-- @return Table of effects
+function Card:react(variables, effects)
     for i,v in ipairs(self.reactive) do
-        v:apply(variables, events)
+        v:apply(variables, effects)
     end
-    return events
+    return effects
 end
 
 return Card

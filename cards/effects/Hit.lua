@@ -11,8 +11,4 @@ function Hit:getType()
     return "hit"
 end
 
-function Hit:apply(target)
-    target:damage(self.count)
-end
-
 return Hit
