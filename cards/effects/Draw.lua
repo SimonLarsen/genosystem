@@ -10,4 +10,12 @@ function Draw:getType()
     return "draw"
 end
 
+function Draw:apply(targets)
+    for _,v in ipairs(targets) do
+        for i=1,self.count do
+            v:draw()
+        end
+    end
+end
+
 return Draw

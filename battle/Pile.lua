@@ -18,9 +18,12 @@ function Pile:addCards(cards)
     end
 end
 
-function Pile:draw()
-    local c = self._cards[1]
-    table.remove(self._cards, 1)
+function Pile:draw(i)
+    if i == nil then
+        i = 1
+    end
+    local c = self._cards[i]
+    table.remove(self._cards, i)
     return c
 end
 
@@ -28,8 +31,16 @@ function Pile:shuffle()
     prox.table.shuffle(self._cards)
 end
 
+function Pile:clear()
+    self._cards = {}
+end
+
 function Pile:size()
     return #self._cards
+end
+
+function Pile:getCards()
+    return self._cards
 end
 
 return Pile

@@ -11,4 +11,12 @@ function Hit:getType()
     return "hit"
 end
 
+function Hit:apply(targets)
+    for _,v in ipairs(targets) do
+        for i=1,self.count do
+            v:hit()
+        end
+    end
+end
+
 return Hit

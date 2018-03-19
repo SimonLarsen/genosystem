@@ -12,4 +12,12 @@ function Deal:getType()
     return "deal"
 end
 
+function Deal:apply(targets)
+    for _,v in ipairs(targets) do
+        for i=1,self.count do
+            v[self.pile]:addCard(self.card)
+        end
+    end
+end
+
 return Deal
