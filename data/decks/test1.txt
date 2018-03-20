@@ -1,3 +1,5 @@
-strike1 10
-strike2 3
+strike1 8
+strike2 5
 recover1 2
+restore1 2
+infect1 2

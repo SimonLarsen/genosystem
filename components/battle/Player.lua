@@ -39,20 +39,21 @@ function Player:shuffle()
 end
 
 function Player:hit()
-    local card
     if self.hand:size() > 0 then
-        card = self.hand:draw()
+        local card_index = love.math.random(1, self.hand:size())
+        local card = self.hand:draw(card_index)
+        self.discard:addCard(card)
     else
         if self.deck:size() == 0 then
             self.shuffle()
         end
         if self.deck:size() > 0 then
-            card = self.deck:draw()
+            local card = self.deck:draw()
+            self.wounded:addCard(card)
         else
             print("Dead!")
         end
     end
-    self.wounded:addCard(card)
 end
 
 return Player

@@ -6,14 +6,14 @@ local Parser = require("cards.Parser")
 
 local engine
 
-local function readDeckFile(path, cards)
+local function readDeckFile(path, card_index)
     local deck = {}
     for line in love.filesystem.lines(path) do
         local parts = prox.string.split(line, " ")
         local id = parts[1]
         local count = tonumber(parts[2])
         for i=1,count do
-            table.insert(deck, cards[id])
+            table.insert(deck, card_index[id])
         end
     end
     return deck
@@ -23,8 +23,8 @@ function prox.load()
     prox.window.set(640, 360, true, 2, false, "scale")
 
     local parser = Parser()
-    local cards = parser:readCards("data/cards.csv")
-    local deck = readDeckFile("data/decks/test1.txt", cards)
+    local card_index = parser:readCards("data/cards.csv")
+    local deck = readDeckFile("data/decks/test1.txt", card_index)
 
     engine = Engine()
 
@@ -44,7 +44,7 @@ function prox.load()
 
     local battle = Entity()
     battle:initialize()
-    battle:add(require("components.battle.Battle")(party[1], party[2], cards))
+    battle:add(require("components.battle.Battle")(party[1], party[2], card_index))
 
     engine:addEntity(battle)
 

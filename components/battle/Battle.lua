@@ -11,11 +11,11 @@ Battle.static.STATE_TARGET  = 4
 --- Constructor.
 -- @param party1 Table of player entities for first party.
 -- @param party2 Table of player entities for second party.
--- @param cards Table of all @{cards.Card} definitions.
-function Battle:initialize(party1, party2, cards)
+-- @param card_index Table of all @{cards.Card} definitions.
+function Battle:initialize(party1, party2, card_index)
     self.party = {party1, party2}
 
-    self.cards = cards
+    self.card_index = card_index
 
     self.state = Battle.static.STATE_INIT
     self.current_party = 1

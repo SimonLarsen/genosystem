@@ -6,7 +6,8 @@ local Card = class("cards.Card")
 --- Constructor.
 -- @param id (strings) Card ID
 -- @param name (string) Name of the card
--- @param token (boolean) If the card a token type
+-- @param token (boolean) Is the card a token type
+-- @param decoy (boolean) Is the card a decoy
 -- @param tag (string) (optional) Card tag
 -- @param buy (number) Buy cost
 -- @param scrap (number) Scrap cost
@@ -14,10 +15,11 @@ local Card = class("cards.Card")
 -- @param reactive Reactive card effect tree
 -- @param text (string) Card effect description
 -- @param description (string) Long card lore description
-function Card:initialize(id, name, token, tag, buy, scrap, active, reactive, text, description)
+function Card:initialize(id, name, token, decoy, tag, buy, scrap, active, reactive, text, description)
     self.id = id
     self.name = name
     self.token = token
+    self.decoy = decoy
     self.tag = tag
     self.buy = buy
     self.scrap = scrap

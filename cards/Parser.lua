@@ -111,6 +111,7 @@ function Parser:readCards(path)
             e.id,
             e.name,
             toboolean(e.token),
+            toboolean(e.decoy),
             e.tag,
             tonumber(e.buy),
             tonumber(e.scrap),

@@ -9,7 +9,7 @@ local CardEffect = require("cards.CardEffect")
 local MAX_ACTIONS = 5
 local HAND_SIZE = 5
 
-function BattleSystem:initialize(cards)
+function BattleSystem:initialize()
     System.initialize(self)
 
     self.font = love.graphics.newFont(10)
@@ -72,7 +72,7 @@ function BattleSystem:update(dt)
             prox.gui.layout:reset(16, 16, 4, 4)
             local play_card = nil
             for i, card in ipairs(player.hand:getCards()) do
-                if prox.gui.Button(card.text, {id="card"..i}, prox.gui.layout:row(100, 20)).hit then
+                if prox.gui.Button(card.text, {id="card"..i}, prox.gui.layout:row(160, 40)).hit then
                     play_card = i
                     break
                 end
@@ -99,7 +99,7 @@ function BattleSystem:update(dt)
                     battle.state = Battle.static.STATE_TARGET
                 elseif effect:isInstanceOf(CardEffect) then
                     local targets = get_targets(battle, effect.target)
-                    effect.effect:apply(targets)
+                    effect.effect:apply(targets, battle.card_index)
                 end
             end
 

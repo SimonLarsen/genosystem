@@ -19,9 +19,7 @@ function Pile:addCards(cards)
 end
 
 function Pile:draw(i)
-    if i == nil then
-        i = 1
-    end
+    i = i or 1
     local c = self._cards[i]
     table.remove(self._cards, i)
     return c
