@@ -36,6 +36,8 @@ function prox.load()
 
     engine = Engine()
 
+    engine:addSystem(require("systems.logic.BattleSystem")())
+
     local names = {
         {"Anders","Preben","Thomas"},
         {"Magle 1","Magle 2","Magle 3"}
@@ -55,9 +57,6 @@ function prox.load()
     battle:add(require("components.battle.Battle")(party[1], party[2], card_index))
 
     engine:addEntity(battle)
-
-    local battle_system = require("systems.logic.BattleSystem")()
-    engine:addSystem(battle_system)
 end
 
 function prox.update(dt)
