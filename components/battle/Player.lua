@@ -18,6 +18,8 @@ function Player:initialize(name, deck)
     self.deck:shuffle()
 end
 
+--- Draw a card from deck to hand. Shuffles discard pile if necessary.
+-- @param return True if drawing was possible, false otherwise
 function Player:draw()
     if self.deck:size() == 0 then
         self:shuffle()
@@ -30,6 +32,7 @@ function Player:draw()
     return true
 end
 
+--- Shuffles discard into deck.
 function Player:shuffle()
     assert(self.deck:size() == 0, "Cannot shuffle when deck is not empty.")
 

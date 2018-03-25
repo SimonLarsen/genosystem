@@ -22,6 +22,12 @@ end
 function prox.load()
     prox.window.set(640, 360, true, 2, false, "scale")
 
+    prox.gui.theme.color = {
+        normal  = {bg = { 66, 66, 66}, fg = {255,255,255}},
+        hovered = {bg = { 50,153,187}, fg = {255,255,255}},
+        active  = {bg = {255,153,  0}, fg = {225,225,225}}
+    }
+
     local parser = Parser()
     local card_index = parser:readCards("data/cards.csv")
     local deck = readDeckFile("data/decks/test1.txt", card_index)

@@ -12,7 +12,7 @@ local HAND_SIZE = 5
 function BattleSystem:initialize()
     System.initialize(self)
 
-    self.font = love.graphics.newFont(10)
+    self.font = love.graphics.newFont("data/fonts/Lato-Regular.ttf", 10)
 end
 
 local function get_targets(battle, target)
@@ -107,7 +107,7 @@ function BattleSystem:update(dt)
             for i=1,2 do
                 for j=1,#battle.party[i] do
                     local p = battle.party[i][j]
-                    if prox.gui.Button(p.name, 316+(i-1)*120, 16+(j-1)*100, 108, 10).hit then
+                    if prox.gui.Button("", {id="target_"..i.."_"..j}, 314+(i-1)*120, 12+(j-1)*114, 112, 76).hit then
                         battle.target = p
                         battle.state = Battle.static.STATE_RESOLVE
                     end
@@ -116,13 +116,13 @@ function BattleSystem:update(dt)
         end
 
         for i=1,2 do
-            prox.gui.layout:reset(320+(i-1)*120, 16, 4, 4)
+            prox.gui.layout:reset(310+(i-1)*120, 16, 4, 4)
             for j=1,#battle.party[i] do
                 local p = battle.party[i][j]
                 if i == battle.current_party and j == battle.current_player then
-                    prox.gui.Label("### " .. p.name .. " ###", prox.gui.layout:row(100, 10))
+                    prox.gui.Label("--- " .. p.name .. " ---", prox.gui.layout:row(120, 10))
                 else
-                    prox.gui.Label("- " .. p.name .. " -", prox.gui.layout:row(100, 10))
+                    prox.gui.Label(p.name, prox.gui.layout:row(120, 10))
                 end
                 prox.gui.Label("Hand: " .. p.hand:size(),       prox.gui.layout:row())
                 prox.gui.Label("Deck: " .. p.deck:size(),       prox.gui.layout:row())
