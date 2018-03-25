@@ -3,6 +3,7 @@ require("luafun.fun")()
 
 local lovebird = require("lovebird")
 local Parser = require("cards.Parser")
+AssetManager = require("core.AssetManager")
 
 local engine
 

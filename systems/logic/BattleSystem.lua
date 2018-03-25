@@ -12,7 +12,7 @@ local HAND_SIZE = 5
 function BattleSystem:initialize()
     System.initialize(self)
 
-    self.font = love.graphics.newFont("data/fonts/Lato-Regular.ttf", 10)
+    self.font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
 end
 
 local function get_targets(battle, target)
@@ -30,7 +30,7 @@ local function get_targets(battle, target)
 end
 
 function BattleSystem:update(dt)
-    love.graphics.setFont(self.font)
+    prox.resources.setFont(self.font)
 
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
