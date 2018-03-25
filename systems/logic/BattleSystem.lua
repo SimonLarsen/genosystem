@@ -83,6 +83,7 @@ function BattleSystem:update(dt)
                 battle.effects = {}
                 local card = player.hand:draw(play_card)
                 card:play(variables, battle.effects)
+                player.discard:addCard(card)
 
                 battle.actions = battle.actions - 1
                 battle.state = Battle.static.STATE_RESOLVE

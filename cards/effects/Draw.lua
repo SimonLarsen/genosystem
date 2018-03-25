@@ -10,7 +10,7 @@ function Draw:getType()
     return "draw"
 end
 
-function Draw:apply(targets)
+function Draw:apply(targets, card_index)
     for _,v in ipairs(targets) do
         for i=1,self.count do
             v:draw()

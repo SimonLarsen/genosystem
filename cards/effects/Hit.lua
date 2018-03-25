@@ -11,7 +11,7 @@ function Hit:getType()
     return "hit"
 end
 
-function Hit:apply(targets)
+function Hit:apply(targets, card_index)
     for _,v in ipairs(targets) do
         for i=1,self.count do
             v:hit()

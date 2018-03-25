@@ -8,4 +8,4 @@ infect1,Infect,,,,200,250,target deal 1 poison hand,,Deal 1 poison token to targ
 infect2,Infect 2,,,,300,350,target deal 2 poison hand,,Deal 2 poison tokens to target's hand.,
 recover1,Recover,,,,123,345,self draw 1,,Draw 1 card.,
 restore1,Restore,,,,400,50,self restore 1,,Restore 1 wounded card.,
-wipe1,Data Wipe,,,,300,100,target deal 1 blank hand,,Deal 1 blank token to target’s hand.,
+wipe1,Data Wipe,,,,300,100,target replace 2 blank,,Blank 2 cards in target’s hand.,

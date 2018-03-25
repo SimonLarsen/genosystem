@@ -19,7 +19,7 @@ function Player:initialize(name, deck)
 end
 
 --- Draw a card from deck to hand. Shuffles discard pile if necessary.
--- @param return True if drawing was possible, false otherwise
+-- @return True if drawing was possible, false otherwise
 function Player:draw()
     if self.deck:size() == 0 then
         self:shuffle()
@@ -29,6 +29,20 @@ function Player:draw()
     end
     local c = self.deck:draw()
     self.hand:addCard(c)
+    return true
+end
+
+--- Discard a card from hand to discard pile.
+-- @param i Card to discard. Chooses randomly if not given.
+-- @return True if discard was possible, false otherwise.
+function Player:discardCard(i)
+    if self.hand:size() == 0 then
+        return false
+    end
+    i = i or love.math.random(1, self.hand:size())
+
+    local card = self.hand:draw(i)
+    self.discard:addCard(card)
     return true
 end
 

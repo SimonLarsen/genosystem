@@ -3,3 +3,4 @@ strike2 5
 recover1 2
 restore1 2
 infect1 2
+wipe1 2

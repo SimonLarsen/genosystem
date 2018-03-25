@@ -10,7 +10,7 @@ function Restore:getType()
     return "restore"
 end
 
-function Restore:apply(targets)
+function Restore:apply(targets, card_index)
     for _,v in ipairs(targets) do
         for i=1,self.count do
             if v.wounded:size() > 0 then
