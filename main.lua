@@ -11,6 +11,7 @@ local function readDeckFile(path, card_index)
     for line in love.filesystem.lines(path) do
         local parts = prox.string.split(line, " ")
         local id = parts[1]
+        assert(card_index[id], "Invalid card id: " .. id)
         local count = tonumber(parts[2])
         for i=1,count do
             table.insert(deck, card_index[id])
