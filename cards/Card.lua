@@ -41,6 +41,12 @@ function Card:isToken()
     return self.token
 end
 
+--- Check if card is a decoy.
+-- @return True if card is a decoy, false otherwise
+function Card:isDecoy()
+    return self.decoy
+end
+
 --- Execute card's active effects.
 -- @param variables Table of current battle variables
 -- @param effects (Output) Table to return effects.

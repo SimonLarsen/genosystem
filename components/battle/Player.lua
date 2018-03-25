@@ -38,14 +38,26 @@ function Player:shuffle()
     self.discard:clear()
 end
 
+--- Give player one hit. Takes card from hand to discard. If hand is empty, top card in deck is wounded instead.
 function Player:hit()
     if self.hand:size() > 0 then
-        local card_index = love.math.random(1, self.hand:size())
-        local card = self.hand:draw(card_index)
+        local decoys = {}
+        for i,v in ipairs(self.hand:getCards()) do
+            if v:isDecoy() then
+                table.insert(decoys, v)
+            end
+        end
+        local card
+        if #decoys > 0 then
+            card = decoys[love.math.random(1, #decoys)]
+        else
+            local card_index = love.math.random(1, self.hand:size())
+            card = self.hand:draw(card_index)
+        end
         self.discard:addCard(card)
     else
         if self.deck:size() == 0 then
-            self.shuffle()
+            self:shuffle()
         end
         if self.deck:size() > 0 then
             local card = self.deck:draw()
