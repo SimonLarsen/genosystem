@@ -5,8 +5,6 @@ local lovebird = require("lovebird")
 local Parser = require("cards.Parser")
 AssetManager = require("core.AssetManager")
 
-local engine
-
 local function readDeckFile(path, card_index)
     local deck = {}
     for line in love.filesystem.lines(path) do
@@ -34,14 +32,15 @@ function prox.load()
     local card_index = parser:readCards("data/cards.csv")
     local deck = readDeckFile("data/decks/test1.txt", card_index)
 
-    engine = Engine()
-
-    engine:addSystem(require("systems.logic.BattleSystem")())
-
     local names = {
         {"Anders","Preben","Thomas"},
         {"Magle 1","Magle 2","Magle 3"}
     }
+
+    local hand_system = require("systems.logic.HandSystem")()
+    local battle_system = require("systems.logic.BattleSystem")()
+    prox.engine:addSystem(hand_system)
+    prox.engine:addSystem(battle_system)
 
     local party = {}
     for i=1,2 do
@@ -52,18 +51,23 @@ function prox.load()
         end
     end
 
+    local hand = Entity()
+    hand:add(require("components.battle.Hand")())
     local battle = Entity()
-    battle:initialize()
-    battle:add(require("components.battle.Battle")(party[1], party[2], card_index))
+    battle:add(require("components.battle.Battle")(party[1], party[2], card_index, hand))
 
-    engine:addEntity(battle)
+    prox.engine:addEntity(battle)
+    prox.engine:addEntity(hand)
+
+    prox.events:addListener("events.PlayCardEvent", battle_system, battle_system.onPlayCard)
+    prox.events:addListener("events.SelectTargetEvent", battle_system, battle_system.onSelectTarget)
 end
 
 function prox.update(dt)
     lovebird.update()
-    engine:update(dt)
+    prox.engine:update(dt)
 end
 
 function prox.draw()
-    engine:draw()
+    prox.engine:draw()
 end

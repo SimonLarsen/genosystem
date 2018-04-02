@@ -47,26 +47,4 @@ function Card:isDecoy()
     return self.decoy
 end
 
---- Execute card's active effects.
--- @param variables Table of current battle variables
--- @param effects (Output) Table to return effects.
--- @return Table of effects
-function Card:play(variables, effects)
-    for i,v in ipairs(self.active) do
-        v:apply(variables, effects)
-    end
-    return effects
-end
-
---- Execute card's reactive effects.
--- @param variables Table of current battle variables
--- @param effects (Output) Table to return effects.
--- @return Table of effects
-function Card:react(variables, effects)
-    for i,v in ipairs(self.reactive) do
-        v:apply(variables, effects)
-    end
-    return effects
-end
-
 return Card
