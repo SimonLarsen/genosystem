@@ -9,6 +9,9 @@ function HandSystem:initialize()
 end
 
 function HandSystem:update(dt)
+    local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
+    local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
+
     for _, e in pairs(self.targets) do
         local hand = e:get("components.battle.Hand")
         local ncards = #hand.cards
@@ -46,9 +49,10 @@ function HandSystem:update(dt)
 
         if hover_card then
             local card = hand.cards[hover_card]
-            local text = card:get("components.battle.Card").card.text
+            local cc = card:get("components.battle.Card").card
             local t = card:get("Transform")
-            prox.gui.Button(text, t.x-40, t.y-48-62, 80, 60)
+            prox.gui.Label(cc.text, prox.window.getWidth()/2-60, prox.window.getHeight()/2-110, 120, 120)
+            prox.gui.Label(cc.name, {font=title_font}, prox.window.getWidth()/2-60, prox.window.getHeight()/2-140, 120, 20)
 
             if prox.mouse.wasPressed(1) then
                 prox.events:fireEvent(PlayCardEvent(hover_card))

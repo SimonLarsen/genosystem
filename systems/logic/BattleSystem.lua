@@ -14,9 +14,6 @@ local HAND_SIZE = 5
 
 function BattleSystem:initialize()
     System.initialize(self)
-
-    self.font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
-    self.img_portait = prox.resources.getImage("data/images/portrait.png")
 end
 
 function BattleSystem:requires()
@@ -24,7 +21,10 @@ function BattleSystem:requires()
 end
 
 function BattleSystem:update(dt)
-    prox.resources.setFont(self.font)
+    local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
+    local img_portrait = prox.resources.getImage("data/images/portrait.png")
+
+    prox.resources.setFont(text_font)
 
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
@@ -74,7 +74,7 @@ function BattleSystem:update(dt)
         for i=1,2 do
             prox.gui.layout:reset(74+(i-1)*372, 27, 4, 4)
             for j=1,#battle.party[i] do
-                if prox.gui.ImageButton(self.img_portait, 12+(i-1)*540, 12+(j-1)*78).hit then
+                if prox.gui.ImageButton(img_portrait, 12+(i-1)*540, 12+(j-1)*78).hit then
                     if battle.state == Battle.static.STATE_TARGET then
                         prox.events:fireEvent(SelectTargetEvent(i, j))
                     end

@@ -1,7 +1,6 @@
 prox = require("prox")
 require("luafun.fun")()
 
-local lovebird = require("lovebird")
 local Parser = require("cards.Parser")
 AssetManager = require("core.AssetManager")
 
@@ -61,13 +60,4 @@ function prox.load()
 
     prox.events:addListener("events.PlayCardEvent", battle_system, battle_system.onPlayCard)
     prox.events:addListener("events.SelectTargetEvent", battle_system, battle_system.onSelectTarget)
-end
-
-function prox.update(dt)
-    lovebird.update()
-    prox.engine:update(dt)
-end
-
-function prox.draw()
-    prox.engine:draw()
 end
