@@ -24,6 +24,7 @@ function BattleSystem:update(dt)
     local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
     local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
     local img_portrait = prox.resources.getImage("data/images/portrait.png")
+    local img_portrait_select = prox.resources.getImage("data/images/portrait_select.png")
 
     prox.resources.setFont(text_font)
 
@@ -42,7 +43,15 @@ function BattleSystem:update(dt)
                 end
             end
 
+        elseif battle.state == Battle.static.STATE_PREPARE then
             local player = battle:currentPlayer()
+            local hand = battle.hand:get("components.battle.Hand")
+            for _, v in ipairs(hand.cards) do
+                prox.engine:removeEntity(v)
+            end
+            hand.cards = {}
+            hand.active = nil
+
             for i, card in ipairs(player.hand:getCards()) do
                 local e = Entity()
                 e:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()+50, 1 - (i-1) / player.hand:size()))
@@ -50,21 +59,19 @@ function BattleSystem:update(dt)
                 e:add(Card(card))
                 local t = e:get("Transform")
 
-                local hand = battle.hand:get("components.battle.Hand")
                 table.insert(hand.cards, e)
                 prox.engine:addEntity(e)
             end
-
-        elseif battle.state == Battle.static.STATE_PREPARE then
             battle.state = Battle.static.STATE_PLAY
 
         elseif battle.state == Battle.static.STATE_PLAY then
-            if prox.gui.Button("Done!", 8, prox.window.getHeight()-26, 50, 20).hit then
+            if prox.gui.Button("End turn", {font=title_font}, 8, prox.window.getHeight()-30, 70, 24).hit then
+                self:endTurn(battle)
             end
 
         elseif battle.state == Battle.static.STATE_RESOLVE then
             if #battle.effects == 0 then
-                battle.state = Battle.static.STATE_PLAY
+                battle.state = Battle.static.STATE_PREPARE
                 local _, hand = next(prox.engine:getEntitiesWithComponent("components.battle.Hand"))
                 hand = hand:get("components.battle.Hand")
                 prox.engine:removeEntity(hand.active)
@@ -74,16 +81,17 @@ function BattleSystem:update(dt)
             end
 
         elseif battle.state == Battle.static.STATE_TARGET then
-            prox.gui.Label("Select target!", {font=title_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-150, 200, 20)
+            prox.gui.Label("Select target!", {font=title_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-140, 200, 20)
             local effect_text = self:getEffectText(battle)
-            prox.gui.Label(effect_text, {font=text_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-130, 200, 20)
+            prox.gui.Label(effect_text, {font=text_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-120, 200, 20)
         end
 
         for i=1,2 do
             prox.gui.layout:reset(74+(i-1)*372, 27, 4, 4)
             for j=1,#battle.party[i] do
-                if prox.gui.ImageButton(img_portrait, 12+(i-1)*540, 12+(j-1)*78).hit then
-                    if battle.state == Battle.static.STATE_TARGET then
+                prox.gui.Image(img_portrait, 12+(i-1)*540, 12+(j-1)*78)
+                if battle.state == Battle.static.STATE_TARGET then
+                    if prox.gui.ImageButton(img_portrait_select, 9+(i-1)*540, 9+(j-1)*78).hit then
                         prox.events:fireEvent(SelectTargetEvent(i, j))
                     end
                 end
@@ -200,6 +208,15 @@ function BattleSystem:getEffectText(battle)
         end
     end
     return effect_text
+end
+
+function BattleSystem:endTurn(battle)
+    battle.current_player = battle.current_player + 1
+    if battle.current_player > #battle:currentParty() then
+        battle.current_party = (battle.current_party % 2) + 1
+        battle.current_player = 1
+    end
+    battle.state = Battle.static.STATE_PREPARE
 end
 
 return BattleSystem

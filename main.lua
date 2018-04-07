@@ -26,6 +26,7 @@ function prox.load()
         hovered = {bg = { 50,153,187}, fg = {255,255,255}},
         active  = {bg = {255,153,  0}, fg = {225,225,225}}
     }
+    prox.gui.theme.cornerRadius = 3
 
     local parser = Parser()
     local card_index = parser:readCards("data/cards.csv")
