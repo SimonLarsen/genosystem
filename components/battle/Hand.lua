@@ -7,6 +7,7 @@ local Pile = require("battle.Pile")
 
 function Hand:initialize()
     self.cards = {}
+    self.active = nil
 end
 
 return Hand

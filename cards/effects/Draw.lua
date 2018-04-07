@@ -18,4 +18,8 @@ function Draw:apply(targets, card_index)
     end
 end
 
+function Draw:getText()
+    return string.format("Draw %d card(s)", self.count)
+end
+
 return Draw

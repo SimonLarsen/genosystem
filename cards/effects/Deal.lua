@@ -20,4 +20,8 @@ function Deal:apply(targets, card_index)
     end
 end
 
+function Deal:getText()
+    return string.format("Deal %d %s token(s) to %s", self.count, self.card, self.pile)
+end
+
 return Deal

@@ -21,4 +21,8 @@ function Restore:apply(targets, card_index)
     end
 end
 
+function Restore:getText()
+    return string.format("Restore %d wounded cards", self.count)
+end
+
 return Restore

@@ -22,6 +22,7 @@ end
 
 function BattleSystem:update(dt)
     local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
+    local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
     local img_portrait = prox.resources.getImage("data/images/portrait.png")
 
     prox.resources.setFont(text_font)
@@ -47,6 +48,7 @@ function BattleSystem:update(dt)
                 e:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()+50, 1 - (i-1) / player.hand:size()))
                 e:add(prox.Sprite(AssetManager.getCardImage(card.id)))
                 e:add(Card(card))
+                local t = e:get("Transform")
 
                 local hand = battle.hand:get("components.battle.Hand")
                 table.insert(hand.cards, e)
@@ -63,12 +65,18 @@ function BattleSystem:update(dt)
         elseif battle.state == Battle.static.STATE_RESOLVE then
             if #battle.effects == 0 then
                 battle.state = Battle.static.STATE_PLAY
+                local _, hand = next(prox.engine:getEntitiesWithComponent("components.battle.Hand"))
+                hand = hand:get("components.battle.Hand")
+                prox.engine:removeEntity(hand.active)
+                hand.active = nil
             else
                 self:resolve(battle)
             end
 
         elseif battle.state == Battle.static.STATE_TARGET then
-            prox.gui.Label("Select target!", prox.window.getWidth()/2-100, prox.window.getHeight()/2-40, 200, 80)
+            prox.gui.Label("Select target!", {font=title_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-150, 200, 20)
+            local effect_text = self:getEffectText(battle)
+            prox.gui.Label(effect_text, {font=text_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-130, 200, 20)
         end
 
         for i=1,2 do
@@ -106,8 +114,8 @@ function BattleSystem:onPlayCard(event)
 
             local hand = battle.hand:get("components.battle.Hand")
             local hc = hand.cards[event.card]
-            prox.engine:removeEntity(hc)
             table.remove(hand.cards, event.card)
+            hand.active = hc
             battle.state = Battle.static.STATE_RESOLVE
         end
     end
@@ -145,6 +153,10 @@ function BattleSystem:reactCard(card, variables, effects)
     return effects
 end
 
+--- Get list of player targets matching target string.
+-- @param battle Current @{components.battle.Battle} instance.
+-- @param target Target string.
+-- @return Table of @{components.battle.Player} instances.
 function BattleSystem:getTargets(battle, target)
     if target == "self" then
         return {battle:currentPlayer()}
@@ -168,6 +180,26 @@ function BattleSystem:resolve(battle)
     elseif e:isInstanceOf(TargetEffect) then
         battle.state = Battle.static.STATE_TARGET
     end
+end
+
+function BattleSystem:getEffectText(battle)
+    local target_effects = {}
+    for _, v in ipairs(battle.effects) do
+        if v:isInstanceOf(CardEffect) and v.target == "target" then
+            table.insert(target_effects, v.effect)
+        else
+            break
+        end
+    end
+
+    local effect_text = ""
+    for i, v in ipairs(target_effects) do
+        effect_text = effect_text .. v:getText() .. "."
+        if i < #target_effects then
+            effect_text = effect_text .. " "
+        end
+    end
+    return effect_text
 end
 
 return BattleSystem

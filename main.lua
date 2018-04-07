@@ -36,8 +36,10 @@ function prox.load()
         {"Magle 1","Magle 2","Magle 3"}
     }
 
+    local card_system = require("systems.logic.CardSystem")()
     local hand_system = require("systems.logic.HandSystem")()
     local battle_system = require("systems.logic.BattleSystem")()
+    prox.engine:addSystem(card_system)
     prox.engine:addSystem(hand_system)
     prox.engine:addSystem(battle_system)
 

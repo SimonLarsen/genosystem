@@ -19,4 +19,8 @@ function Hit:apply(targets, card_index)
     end
 end
 
+function Hit:getText()
+    return string.format("Deal %d damage", self.count)
+end
+
 return Hit

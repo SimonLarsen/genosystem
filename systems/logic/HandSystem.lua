@@ -21,29 +21,36 @@ function HandSystem:update(dt)
 
         local mx, my = prox.mouse.getPosition()
 
-        for i, card in ipairs(hand.cards) do
-            local t = card:get("Transform")
-            local dx = math.abs(mx - t.x)
-            local dy = math.abs(my - t.y)
-            if dy <= 48 and dx <= 36 and dx < mindist then
-                mindist = dx
-                hover_card = i
+        if hand.active then
+            local c = hand.active:get("components.battle.Card")
+            c.targetx = prox.window.getWidth() / 2
+            c.targety = prox.window.getHeight() / 2 - 40
+        else
+            for i, card in ipairs(hand.cards) do
+                local t = card:get("Transform")
+                local dx = math.abs(mx - t.x)
+                local dy = math.abs(my - t.y)
+                if dy <= 48 and dx <= 36 and dx < mindist then
+                    mindist = dx
+                    hover_card = i
+                end
             end
         end
 
         for i, card in ipairs(hand.cards) do
-            local t = card:get("Transform")
-            local offset = (i-1) / (ncards-1) * 2 - 1
+            local c = card:get("components.battle.Card")
 
-            local target_x = prox.window.getWidth()/2 + offset*100
-            local target_y = prox.window.getHeight() - 60
+            local offset = (i-1) / (ncards-1) * 2 - 1
+            local hand_width = math.min((ncards-1) * 72, 250)
+
+            c.targetx = prox.window.getWidth()/2 + offset*hand_width/2
+            c.targety = prox.window.getHeight() - 60
             if i == hover_card then
-                target_y = prox.window.getHeight() - 70
+                c.targety = c.targety - 10
             end
-            t.x, t.y = prox.math.movetowards2(t.x, t.y, target_x, target_y, 200*dt)
 
             if hover_card then
-                t.z = math.abs(i - hover_card)
+                card:get("Transform").z = math.abs(i - hover_card)
             end
         end
 

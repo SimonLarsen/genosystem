@@ -24,4 +24,8 @@ function Replace:apply(targets, card_index)
     end
 end
 
+function Replace:getText()
+    return string.format("Replace %d cards in hand with %s token", self.count, self.card)
+end
+
 return Replace
