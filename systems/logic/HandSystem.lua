@@ -41,7 +41,7 @@ function HandSystem:update(dt)
             local c = card:get("components.battle.Card")
 
             local offset = (i-1) / (ncards-1) * 2 - 1
-            local hand_width = math.max(math.min((ncards-1) * 72, 300), 10)
+            local hand_width = math.max(math.min((ncards-1) * 74, 300), 10)
 
             c.targetx = prox.window.getWidth()/2 + offset*hand_width/2
             c.targety = prox.window.getHeight() - 60
