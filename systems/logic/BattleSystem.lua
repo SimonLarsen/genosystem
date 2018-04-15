@@ -106,8 +106,9 @@ function BattleSystem:update(dt)
                 make_card_entity(battle, card, prox.window.getWidth()/2, prox.window.getHeight()+50, 1 - (i-1) / #player.hand)
             end
 
-            while #player.hand < HAND_SIZE and #player.deck > 0 do
-                self:drawCard(battle, player, 1)
+
+            if #player.hand < HAND_SIZE then
+                self:drawCard(battle, player, HAND_SIZE-#player.hand)
             end
 
             battle.state = Battle.static.STATE_PLAY_CARD
@@ -154,7 +155,8 @@ function BattleSystem:update(dt)
                 end
 
                 local p = battle.party[i][j]
-                prox.gui.Label("Hand: " .. #p.hand,       prox.gui.layout:row(120, 8))
+                prox.gui.Label(p.name,                    prox.gui.layout:row(120, 8))
+                prox.gui.Label("Hand: " .. #p.hand,       prox.gui.layout:row())
                 prox.gui.Label("Deck: " .. #p.deck,       prox.gui.layout:row())
                 prox.gui.Label("Discard: " .. #p.discard, prox.gui.layout:row())
                 prox.gui.layout:row(120, 26)
@@ -340,16 +342,20 @@ end
 
 function BattleSystem:hitPlayer(battle, player, damage)
     local hand = battle.hand:get("components.battle.Hand")
+    local drawn = 0
     for i=1, damage do
         local index = player:hit()
         if index ~= nil and player == battle:currentPlayer() then
             local e = hand.cards[index]
             table.remove(hand.cards, index)
             prox.engine:removeEntity(e)
+            drawn = drawn + 1
         end
     end
 
-    make_indicator_entity(battle, player, Indicator.static.TYPE_DAMAGE, damage)
+    if drawn > 0 then
+        make_indicator_entity(battle, player, Indicator.static.TYPE_DAMAGE, damage)
+    end
 end
 
 return BattleSystem
