@@ -37,10 +37,10 @@ function prox.load()
         {"Magle 1","Magle 2","Magle 3"}
     }
 
-    prox.engine:addSystem(require("systems.graphics.IndicatorSystem")())
+    prox.engine:addSystem(require("systems.logic.BattleSystem")())
     prox.engine:addSystem(require("systems.logic.CardSystem")())
     prox.engine:addSystem(require("systems.logic.HandSystem")())
-    prox.engine:addSystem(require("systems.logic.BattleSystem")())
+    prox.engine:addSystem(require("systems.graphics.IndicatorSystem")())
 
     local party = {}
     for i=1,2 do

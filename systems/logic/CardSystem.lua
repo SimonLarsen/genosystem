@@ -1,3 +1,5 @@
+--- In-batle card visualization system.
+-- @classmod systems.logic.CardSystem
 local CardSystem = class("systems.logic.CardSystem", System)
 
 function CardSystem:initialize()

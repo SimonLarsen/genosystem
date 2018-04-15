@@ -1,9 +1,10 @@
---- In-battle system.
+--- In-battle controller system.
 -- @classmod systems.logic.BattleSystem
 local BattleSystem = class("systems.logic.BattleSystem", System)
 
 local Battle = require("components.battle.Battle")
 local Card = require("components.battle.Card")
+local Indicator = require("components.battle.Indicator")
 
 local TargetEffect = require("cards.TargetEffect")
 local CardEffect = require("cards.CardEffect")
@@ -22,6 +23,38 @@ local function make_card_entity(battle, card, x, y, z)
     table.insert(hand.cards, e)
     prox.engine:addEntity(e)
     return e
+end
+
+local function make_indicator_entity(battle, player, type, value, token)
+    for i=1,2 do
+        for j=1,#battle.party[i] do
+            if player == battle.party[i][j] then
+                local e = Entity()
+                e:add(prox.Tween())
+
+                local x, y, targetx, targety
+                if type == Indicator.static.TYPE_DEAL then
+                    x, y = prox.window.getWidth()/2, prox.window.getHeight()/2-40
+                    targetx, targety = 50+(i-1)*540, 49+(j-1)*78
+                    e:add(prox.Transform(x, y))
+                    e:add(Indicator(type, 1.5, value, token))
+
+                    e:get("Tween"):add(0.75, e:get("Transform"), {x=targetx, y=targety}, "inOutQuad")
+                else
+                    x, y = 50+(i-1)*540, 52+(j-1)*78
+                    targetx, targety = x, y-5
+                    e:add(prox.Transform(x, y))
+                    e:add(Indicator(type, 1.5, value))
+                    e:get("Tween"):add(0.5, e:get("Transform"), {x=targetx, y=targety}, "outQuad")
+                    e:get("Tween"):add(1.5, e:get("components.battle.Indicator"), {alpha=0},
+                        function(t,b,c,d) return prox.tween.easing.outQuad(t*2-d,b,c,d)
+                    end)
+                end
+                prox.engine:addEntity(e)
+                return e
+            end
+        end
+    end
 end
 
 function BattleSystem:initialize()
@@ -105,15 +138,15 @@ function BattleSystem:update(dt)
         for i=1,2 do
             prox.gui.layout:reset(74+(i-1)*372, 27, 4, 4)
             for j=1,#battle.party[i] do
-                if battle.party[i][j] == battle:currentPlayer() then
-                    prox.gui.Image(img_portrait_active, 12+(i-1)*540, 12+(j-1)*78)
-                else
-                    prox.gui.Image(img_portrait, 12+(i-1)*540, 12+(j-1)*78)
-                end
                 if battle.state == Battle.static.STATE_TARGET then
                     if prox.gui.ImageButton(img_portrait_target, 10+(i-1)*540, 10+(j-1)*78).hit then
                         prox.events:fireEvent(SelectTargetEvent(i, j))
                     end
+                end
+                if battle.party[i][j] == battle:currentPlayer() then
+                    prox.gui.Image(img_portrait_active, 12+(i-1)*540, 12+(j-1)*78)
+                else
+                    prox.gui.Image(img_portrait, 12+(i-1)*540, 12+(j-1)*78)
                 end
 
                 local p = battle.party[i][j]
@@ -268,12 +301,12 @@ function BattleSystem:drawCard(battle, player, count)
         if card == nil then
             return
         end
-        if player ~= battle:currentPlayer() then
-            return
+        if player == battle:currentPlayer() then
+            make_card_entity(battle, card, prox.window.getWidth()-38, prox.window.getHeight()-51, i)
         end
-
-        make_card_entity(battle, card, prox.window.getWidth()-38, prox.window.getHeight()-51, i)
     end
+
+    make_indicator_entity(battle, Indicator.static.TYPE_DRAW, count, player)
 end
 
 function BattleSystem:dealCard(battle, player, id, pile, count)
@@ -293,6 +326,10 @@ function BattleSystem:dealCard(battle, player, id, pile, count)
             make_card_entity(battle, card, prox.window.getWidth() / 2, prox.window.getHeight() / 2 - 40)
         end
     end
+
+    if player ~= battle:currentPlayer() or pile ~= "hand"then
+        make_indicator_entity(battle, player, Indicator.static.TYPE_DEAL, count, id)
+    end
 end
 
 function BattleSystem:hitPlayer(battle, player, damage)
@@ -306,16 +343,7 @@ function BattleSystem:hitPlayer(battle, player, damage)
         end
     end
 
-    for i=1,2 do
-        for j=1,#battle.party[i] do
-            if player == battle.party[i][j] then
-                local e = Entity()
-                e:add(prox.Transform(50+(i-1)*540, 49+(j-1)*78))
-                e:add(require("components.battle.Indicator")("damage", damage))
-                prox.engine:addEntity(e)
-            end
-        end
-    end
+    make_indicator_entity(battle, player, Indicator.static.TYPE_DAMAGE, damage)
 end
 
 return BattleSystem
