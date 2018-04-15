@@ -46,8 +46,8 @@ local function make_indicator_entity(battle, player, type, value, token)
                     e:add(prox.Transform(x, y))
                     e:add(Indicator(type, 1.5, value))
                     e:get("Tween"):add(0.5, e:get("Transform"), {x=targetx, y=targety}, "outQuad")
-                    e:get("Tween"):add(1.5, e:get("components.battle.Indicator"), {alpha=0},
-                        function(t,b,c,d) return prox.tween.easing.outQuad(t*2-d,b,c,d)
+                    e:get("Tween"):add(1.0, e:get("components.battle.Indicator"), {alpha=0},
+                        function(t,b,c,d) return prox.tween.easing.linear(t*2-d,b,c,d)
                     end)
                 end
                 prox.engine:addEntity(e)
@@ -55,6 +55,7 @@ local function make_indicator_entity(battle, player, type, value, token)
             end
         end
     end
+    error("Trying to add indicator for unknown player")
 end
 
 function BattleSystem:initialize()
@@ -72,6 +73,7 @@ function BattleSystem:update(dt)
     local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
     local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
     local img_portrait = prox.resources.getImage("data/images/portrait.png")
+    local img_portrait_dead = prox.resources.getImage("data/images/portrait_dead.png")
     local img_portrait_active = prox.resources.getImage("data/images/portrait_active.png")
     local img_portrait_target = prox.resources.getImage("data/images/portrait_target.png")
 
@@ -116,7 +118,9 @@ function BattleSystem:update(dt)
             end
 
         elseif battle.state == Battle.static.STATE_RESOLVE then
-            if #battle.effects == 0 then
+            if #battle.effects > 0 then
+                self:resolve(battle)
+            else
                 if battle.phase == Battle.static.PHASE_ACTIVE then
                     battle.state = Battle.static.STATE_PLAY_CARD
                     local _, hand = next(prox.engine:getEntitiesWithComponent("components.battle.Hand"))
@@ -125,8 +129,6 @@ function BattleSystem:update(dt)
                     hand.active = nil
                 else
                 end
-            else
-                self:resolve(battle)
             end
 
         elseif battle.state == Battle.static.STATE_TARGET then
@@ -138,15 +140,17 @@ function BattleSystem:update(dt)
         for i=1,2 do
             prox.gui.layout:reset(74+(i-1)*372, 27, 4, 4)
             for j=1,#battle.party[i] do
-                if battle.state == Battle.static.STATE_TARGET then
+                if battle.state == Battle.static.STATE_TARGET and battle.party[i][j].alive then
                     if prox.gui.ImageButton(img_portrait_target, 10+(i-1)*540, 10+(j-1)*78).hit then
                         prox.events:fireEvent(SelectTargetEvent(i, j))
                     end
                 end
                 if battle.party[i][j] == battle:currentPlayer() then
                     prox.gui.Image(img_portrait_active, 12+(i-1)*540, 12+(j-1)*78)
-                else
+                elseif battle.party[i][j].alive == true then
                     prox.gui.Image(img_portrait, 12+(i-1)*540, 12+(j-1)*78)
+                else
+                    prox.gui.Image(img_portrait_dead, 12+(i-1)*540, 12+(j-1)*78)
                 end
 
                 local p = battle.party[i][j]
@@ -287,11 +291,13 @@ function BattleSystem:getEffectText(battle)
 end
 
 function BattleSystem:endTurn(battle)
-    battle.current_player = battle.current_player + 1
-    if battle.current_player > #battle:currentParty() then
-        battle.current_party = (battle.current_party % 2) + 1
-        battle.current_player = 1
-    end
+    repeat
+        battle.current_player = battle.current_player + 1
+        if battle.current_player > #battle:currentParty() then
+            battle.current_party = (battle.current_party % 2) + 1
+            battle.current_player = 1
+        end
+    until battle:currentPlayer().alive == true
     battle.state = Battle.static.STATE_PREPARE
 end
 
@@ -306,7 +312,7 @@ function BattleSystem:drawCard(battle, player, count)
         end
     end
 
-    make_indicator_entity(battle, Indicator.static.TYPE_DRAW, count, player)
+    make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, count)
 end
 
 function BattleSystem:dealCard(battle, player, id, pile, count)

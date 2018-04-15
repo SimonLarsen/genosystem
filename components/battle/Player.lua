@@ -14,6 +14,7 @@ function Player:initialize(name, deck)
     self.react = {}
     self.discard = {}
     self.deck = {}
+    self.alive = true
 
     for i,v in pairs(deck) do
         table.insert(self.deck, v)
@@ -51,6 +52,7 @@ end
 
 function Player:hit(i)
     if #self.hand == 0 then
+        self.alive = false
         return nil
     end
     i = i or love.math.random(1, #self.hand)
