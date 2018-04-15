@@ -37,12 +37,10 @@ function prox.load()
         {"Magle 1","Magle 2","Magle 3"}
     }
 
-    local card_system = require("systems.logic.CardSystem")()
-    local hand_system = require("systems.logic.HandSystem")()
-    local battle_system = require("systems.logic.BattleSystem")()
-    prox.engine:addSystem(card_system)
-    prox.engine:addSystem(hand_system)
-    prox.engine:addSystem(battle_system)
+    prox.engine:addSystem(require("systems.graphics.IndicatorSystem")())
+    prox.engine:addSystem(require("systems.logic.CardSystem")())
+    prox.engine:addSystem(require("systems.logic.HandSystem")())
+    prox.engine:addSystem(require("systems.logic.BattleSystem")())
 
     local party = {}
     for i=1,2 do
@@ -60,7 +58,4 @@ function prox.load()
 
     prox.engine:addEntity(battle)
     prox.engine:addEntity(hand)
-
-    prox.events:addListener("events.PlayCardEvent", battle_system, battle_system.onPlayCard)
-    prox.events:addListener("events.SelectTargetEvent", battle_system, battle_system.onSelectTarget)
 end

@@ -22,7 +22,7 @@ function Action:apply(variables, effects)
         table.insert(effects, TargetEffect())
     end
     for i,v in ipairs(self.effects) do
-        table.insert(effects, CardEffect(self.target, v))
+        table.insert(effects, CardEffect(self.target, v:clone()))
     end
     return effects
 end

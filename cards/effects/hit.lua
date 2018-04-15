@@ -4,23 +4,16 @@
 local Hit = class("cards.effects.Hit")
 
 function Hit:initialize(count)
+    self.type = "hit"
     self.count = count
-end
-
-function Hit:getType()
-    return "hit"
-end
-
-function Hit:apply(targets, card_index)
-    for _,v in ipairs(targets) do
-        for i=1,self.count do
-            v:hit()
-        end
-    end
 end
 
 function Hit:getText()
     return string.format("Deal %d damage", self.count)
+end
+
+function Hit:clone()
+    return Hit(self.count)
 end
 
 return Hit

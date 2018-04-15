@@ -10,79 +10,60 @@ local Pile = require("battle.Pile")
 function Player:initialize(name, deck)
     self.name = name
 
-    self.hand = Pile()
-    self.discard = Pile()
-    self.wounded = Pile()
-    self.deck = Pile(deck)
+    self.hand = {}
+    self.react = {}
+    self.discard = {}
+    self.deck = {}
 
-    self.deck:shuffle()
+    for i,v in pairs(deck) do
+        table.insert(self.deck, v)
+    end
+
+    prox.table.shuffle(self.deck)
 end
 
 --- Draw a card from deck to hand. Shuffles discard pile if necessary.
 -- @return True if drawing was possible, false otherwise
 function Player:draw()
-    if self.deck:size() == 0 then
-        self:shuffle()
+    if #self.deck == 0 then
+        return nil
     end
-    if self.deck:size() == 0 then
-        return false
-    end
-    local c = self.deck:draw()
-    self.hand:addCard(c)
-    return true
+    local c = self.deck[1]
+    table.remove(self.deck, 1)
+    table.insert(self.hand, c)
+    return c
 end
 
 --- Discard a card from hand to discard pile.
 -- @param i Card to discard. Chooses randomly if not given.
 -- @return True if discard was possible, false otherwise.
 function Player:discardCard(i)
-    if self.hand:size() == 0 then
-        return false
+    if #self.hand == 0 then
+        return nil
     end
-    i = i or love.math.random(1, self.hand:size())
+    i = i or love.math.random(1, #self.hand)
 
-    local card = self.hand:draw(i)
-    self.discard:addCard(card)
-    return true
+    local card = self.hand[i]
+    table.remove(self.hand, i)
+    table.insert(self.discard, 1, card)
+    return card
 end
 
---- Shuffles discard into deck.
-function Player:shuffle()
-    assert(self.deck:size() == 0, "Cannot shuffle when deck is not empty.")
-
-    self.deck:addCards(self.discard:getCards())
-    self.deck:shuffle()
-    self.discard:clear()
-end
-
---- Give player one hit. Takes card from hand to discard. If hand is empty, top card in deck is wounded instead.
-function Player:hit()
-    if self.hand:size() > 0 then
-        local decoys = {}
-        for i,v in ipairs(self.hand:getCards()) do
-            if v:isDecoy() then
-                table.insert(decoys, v)
-            end
-        end
-        local card
-        if #decoys > 0 then
-            card = decoys[love.math.random(1, #decoys)]
-        else
-            local card_index = love.math.random(1, self.hand:size())
-            card = self.hand:draw(card_index)
-        end
-        self.discard:addCard(card)
-    else
-        if self.deck:size() == 0 then
-            self:shuffle()
-        end
-        if self.deck:size() > 0 then
-            local card = self.deck:draw()
-            self.wounded:addCard(card)
-        else
-            print("Dead!")
-        end
+function Player:hit(i)
+    if #self.hand == 0 then
+        return nil
     end
+    i = i or love.math.random(1, #self.hand)
+
+    local card = self.hand[i]
+    table.remove(self.hand, i)
+    table.insert(self.discard, 1, card)
+
+    if #card.reactive > 0 then
+        table.insert(self.react, card)
+    end
+
+    return i
 end
 
 return Player

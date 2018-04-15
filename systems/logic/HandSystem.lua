@@ -40,7 +40,12 @@ function HandSystem:update(dt)
         for i, card in ipairs(hand.cards) do
             local c = card:get("components.battle.Card")
 
-            local offset = (i-1) / (ncards-1) * 2 - 1
+            local offset
+            if ncards > 1 then
+                offset = (i-1) / (ncards-1) * 2 - 1
+            else
+                offset = 0
+            end
             local hand_width = math.max(math.min((ncards-1) * 74, 300), 10)
 
             c.targetx = prox.window.getWidth()/2 + offset*hand_width/2

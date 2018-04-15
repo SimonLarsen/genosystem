@@ -1,6 +1,5 @@
-strike1 8
+recover2 5
+strike1 5
 strike2 5
-recover1 2
-restore1 2
-infect1 2
-wipe1 2
+seppuku1 3
+infect2 5

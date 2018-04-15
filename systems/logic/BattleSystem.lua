@@ -12,8 +12,23 @@ local SelectTargetEvent = require("events.SelectTargetEvent")
 local MAX_ACTIONS = 5
 local HAND_SIZE = 5
 
+local function make_card_entity(battle, card, x, y, z)
+    local e = Entity()
+    e:add(prox.Transform(x, y, z))
+    e:add(prox.Sprite(AssetManager.getCardImage(card.id)))
+    e:add(Card(card))
+
+    local hand = battle.hand:get("components.battle.Hand")
+    table.insert(hand.cards, e)
+    prox.engine:addEntity(e)
+    return e
+end
+
 function BattleSystem:initialize()
     System.initialize(self)
+
+    prox.events:addListener("events.PlayCardEvent", self, self.onPlayCard)
+    prox.events:addListener("events.SelectTargetEvent", self, self.onSelectTarget)
 end
 
 function BattleSystem:requires()
@@ -24,20 +39,20 @@ function BattleSystem:update(dt)
     local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
     local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
     local img_portrait = prox.resources.getImage("data/images/portrait.png")
-    local img_portrait_select = prox.resources.getImage("data/images/portrait_select.png")
+    local img_portrait_active = prox.resources.getImage("data/images/portrait_active.png")
+    local img_portrait_target = prox.resources.getImage("data/images/portrait_target.png")
 
     prox.resources.setFont(text_font)
 
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
 
-        -- start of battle
         if battle.state == Battle.static.STATE_INIT then
             battle.state = Battle.static.STATE_PREPARE
 
             for _,party in ipairs(battle.party) do
                 for _,player in ipairs(party) do
-                    while player.hand:size() < HAND_SIZE do
+                    while #player.hand < HAND_SIZE and #player.deck > 0 do
                         player:draw()
                     end
                 end
@@ -52,30 +67,31 @@ function BattleSystem:update(dt)
             hand.cards = {}
             hand.active = nil
 
-            for i, card in ipairs(player.hand:getCards()) do
-                local e = Entity()
-                e:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()+50, 1 - (i-1) / player.hand:size()))
-                e:add(prox.Sprite(AssetManager.getCardImage(card.id)))
-                e:add(Card(card))
-                local t = e:get("Transform")
-
-                table.insert(hand.cards, e)
-                prox.engine:addEntity(e)
+            for i, card in ipairs(player.hand) do
+                make_card_entity(battle, card, prox.window.getWidth()/2, prox.window.getHeight()+50, 1 - (i-1) / #player.hand)
             end
-            battle.state = Battle.static.STATE_PLAY
 
-        elseif battle.state == Battle.static.STATE_PLAY then
+            while #player.hand < HAND_SIZE and #player.deck > 0 do
+                self:drawCard(battle, player, 1)
+            end
+
+            battle.state = Battle.static.STATE_PLAY_CARD
+
+        elseif battle.state == Battle.static.STATE_PLAY_CARD then
             if prox.gui.Button("End turn", {font=title_font}, 8, prox.window.getHeight()-30, 70, 24).hit then
                 self:endTurn(battle)
             end
 
         elseif battle.state == Battle.static.STATE_RESOLVE then
             if #battle.effects == 0 then
-                battle.state = Battle.static.STATE_PREPARE
-                local _, hand = next(prox.engine:getEntitiesWithComponent("components.battle.Hand"))
-                hand = hand:get("components.battle.Hand")
-                prox.engine:removeEntity(hand.active)
-                hand.active = nil
+                if battle.phase == Battle.static.PHASE_ACTIVE then
+                    battle.state = Battle.static.STATE_PLAY_CARD
+                    local _, hand = next(prox.engine:getEntitiesWithComponent("components.battle.Hand"))
+                    hand = hand:get("components.battle.Hand")
+                    prox.engine:removeEntity(hand.active)
+                    hand.active = nil
+                else
+                end
             else
                 self:resolve(battle)
             end
@@ -89,18 +105,21 @@ function BattleSystem:update(dt)
         for i=1,2 do
             prox.gui.layout:reset(74+(i-1)*372, 27, 4, 4)
             for j=1,#battle.party[i] do
-                prox.gui.Image(img_portrait, 12+(i-1)*540, 12+(j-1)*78)
+                if battle.party[i][j] == battle:currentPlayer() then
+                    prox.gui.Image(img_portrait_active, 12+(i-1)*540, 12+(j-1)*78)
+                else
+                    prox.gui.Image(img_portrait, 12+(i-1)*540, 12+(j-1)*78)
+                end
                 if battle.state == Battle.static.STATE_TARGET then
-                    if prox.gui.ImageButton(img_portrait_select, 9+(i-1)*540, 9+(j-1)*78).hit then
+                    if prox.gui.ImageButton(img_portrait_target, 10+(i-1)*540, 10+(j-1)*78).hit then
                         prox.events:fireEvent(SelectTargetEvent(i, j))
                     end
                 end
 
                 local p = battle.party[i][j]
-                prox.gui.Label("Hand: " .. p.hand:size(),       prox.gui.layout:row(120, 8))
-                prox.gui.Label("Deck: " .. p.deck:size(),       prox.gui.layout:row())
-                prox.gui.Label("Discard: " .. p.discard:size(), prox.gui.layout:row())
-                prox.gui.Label("Wounded: " .. p.wounded:size(), prox.gui.layout:row())
+                prox.gui.Label("Hand: " .. #p.hand,       prox.gui.layout:row(120, 8))
+                prox.gui.Label("Deck: " .. #p.deck,       prox.gui.layout:row())
+                prox.gui.Label("Discard: " .. #p.discard, prox.gui.layout:row())
                 prox.gui.layout:row(120, 26)
             end
         end
@@ -110,15 +129,16 @@ end
 function BattleSystem:onPlayCard(event)
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
-        if battle.state == Battle.static.STATE_PLAY then
+        if battle.state == Battle.static.STATE_PLAY_CARD then
             local player = battle:currentPlayer()
-            assert(event.card >= 1 and event.card <= player.hand:size(), "Invalid hand card index.")
+            assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
 
             battle.effects = {}
             local variables = {}
-            local card = player.hand:draw(event.card)
+            local card = player.hand[event.card]
+            table.remove(player.hand, event.card)
+            table.insert(player.discard, 1, card)
             self:playCard(card, {}, battle.effects)
-            player.discard:addCard(card)
 
             local hand = battle.hand:get("components.battle.Hand")
             local hc = hand.cards[event.card]
@@ -182,11 +202,34 @@ end
 function BattleSystem:resolve(battle)
     local e = battle.effects[1]
     table.remove(battle.effects, 1)
-    if e:isInstanceOf(CardEffect) then
-        local targets = self:getTargets(battle, e.target)
-        e.effect:apply(targets, battle.card_index)
-    elseif e:isInstanceOf(TargetEffect) then
+
+    if e:isInstanceOf(TargetEffect) then
         battle.state = Battle.static.STATE_TARGET
+
+    elseif e:isInstanceOf(CardEffect) then
+        local targets = self:getTargets(battle, e.target)
+        local effect = e.effect
+
+        local type = effect.type
+        if type == "deal" then
+            for _, target in ipairs(targets) do
+                self:dealCard(battle, target, effect.card, effect.pile, effect.count)
+            end
+        elseif type == "draw" then
+            for _, target in ipairs(targets) do
+                self:drawCard(battle, target, effect.count)
+            end
+        elseif type == "hit" then
+            for _, target in ipairs(targets) do
+                self:hitPlayer(battle, target, effect.count)
+            end
+        elseif type == "replace" then
+            error("\"replace\" card effect not implemented.")
+        elseif type == "restore" then
+            error("\"restore\" card effect not implemented.")
+        end
+    else
+        error(string.format("Unknown card effect type: \"%s\"", e))
     end
 end
 
@@ -217,6 +260,62 @@ function BattleSystem:endTurn(battle)
         battle.current_player = 1
     end
     battle.state = Battle.static.STATE_PREPARE
+end
+
+function BattleSystem:drawCard(battle, player, count)
+    for i=1, count do
+        local card = player:draw()
+        if card == nil then
+            return
+        end
+        if player ~= battle:currentPlayer() then
+            return
+        end
+
+        make_card_entity(battle, card, prox.window.getWidth()-38, prox.window.getHeight()-51, i)
+    end
+end
+
+function BattleSystem:dealCard(battle, player, id, pile, count)
+    local card = battle.card_index[id]
+    for i=1, count do
+        if pile == "hand" then
+            table.insert(player.hand, card)
+        elseif pile == "deck" then
+            table.insert(player.deck, 1, card)
+        elseif pile == "discard" then
+            table.insert(player.discard, 1, card)
+        else
+            error(string.format("Unknown card pile target: \"%s\"", pile))
+        end
+
+        if player == battle:currentPlayer() and pile == "hand" then
+            make_card_entity(battle, card, prox.window.getWidth() / 2, prox.window.getHeight() / 2 - 40)
+        end
+    end
+end
+
+function BattleSystem:hitPlayer(battle, player, damage)
+    local hand = battle.hand:get("components.battle.Hand")
+    for i=1, damage do
+        local index = player:hit()
+        if index ~= nil and player == battle:currentPlayer() then
+            local e = hand.cards[index]
+            table.remove(hand.cards, index)
+            prox.engine:removeEntity(e)
+        end
+    end
+
+    for i=1,2 do
+        for j=1,#battle.party[i] do
+            if player == battle.party[i][j] then
+                local e = Entity()
+                e:add(prox.Transform(50+(i-1)*540, 49+(j-1)*78))
+                e:add(require("components.battle.Indicator")("damage", damage))
+                prox.engine:addEntity(e)
+            end
+        end
+    end
 end
 
 return BattleSystem

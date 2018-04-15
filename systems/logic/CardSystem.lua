@@ -9,7 +9,7 @@ function CardSystem:update(dt)
         local t = e:get("Transform")
         local card = e:get("components.battle.Card")
 
-        local speed = math.min(10*math.sqrt((t.x-card.targetx)^2 + (t.y-card.targety)^2), 1000)
+        local speed = math.min(10*math.sqrt((t.x-card.targetx)^2 + (t.y-card.targety)^2), 700)
         t.x, t.y = prox.math.movetowards2(t.x, t.y, card.targetx, card.targety, speed*dt)
     end
 end

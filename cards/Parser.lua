@@ -13,9 +13,10 @@ local function parseEffects()
 
     for i, f in ipairs(love.filesystem.getDirectoryItems("cards/effects")) do
         if prox.string.endswith(f, ".lua") then
-            local e = require("cards.effects." .. string.sub(f, 1, #f-4))
-            assert(effects[e:getType()] == nil, "Effect type \"" .. e:getType() .. "\" already defined.")
-            effects[e:getType()] = e
+            local name = string.sub(f, 1, #f-4)
+            local e = require("cards.effects." .. name)
+            assert(effects[name] == nil, "Effect type \"" .. name .. "\" already defined.")
+            effects[name] = e
         end
     end
 
