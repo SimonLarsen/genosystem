@@ -304,17 +304,21 @@ function BattleSystem:endTurn(battle)
 end
 
 function BattleSystem:drawCard(battle, player, count)
+    local drawn = 0
     for i=1, count do
         local card = player:draw()
         if card == nil then
-            return
+            break
         end
         if player == battle:currentPlayer() then
             make_card_entity(battle, card, prox.window.getWidth()-38, prox.window.getHeight()-51, i)
         end
+        drawn = drawn + 1
     end
 
-    make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, count)
+    if drawn > 0 then
+        make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, drawn)
+    end
 end
 
 function BattleSystem:dealCard(battle, player, id, pile, count)
@@ -342,20 +346,16 @@ end
 
 function BattleSystem:hitPlayer(battle, player, damage)
     local hand = battle.hand:get("components.battle.Hand")
-    local drawn = 0
     for i=1, damage do
         local index = player:hit()
         if index ~= nil and player == battle:currentPlayer() then
             local e = hand.cards[index]
             table.remove(hand.cards, index)
             prox.engine:removeEntity(e)
-            drawn = drawn + 1
         end
     end
 
-    if drawn > 0 then
-        make_indicator_entity(battle, player, Indicator.static.TYPE_DAMAGE, damage)
-    end
+    make_indicator_entity(battle, player, Indicator.static.TYPE_DAMAGE, damage)
 end
 
 return BattleSystem
