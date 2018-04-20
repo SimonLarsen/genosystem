@@ -14,6 +14,7 @@ function HandSystem:update(dt)
 
     for _, e in pairs(self.targets) do
         local hand = e:get("components.battle.Hand")
+        local handpos = e:get("Transform")
         local ncards = #hand.cards
 
         local hover_card = nil
@@ -23,8 +24,8 @@ function HandSystem:update(dt)
 
         if hand.active then
             local c = hand.active:get("components.battle.Card")
-            c.targetx = prox.window.getWidth() / 2
-            c.targety = prox.window.getHeight() / 2 - 40
+            c.target.x = prox.window.getWidth() / 2
+            c.target.y = prox.window.getHeight() / 2 - 40
         else
             for i, card in ipairs(hand.cards) do
                 local t = card:get("Transform")
@@ -48,10 +49,10 @@ function HandSystem:update(dt)
             end
             local hand_width = math.max(math.min((ncards-1) * 74, 300), 10)
 
-            c.targetx = prox.window.getWidth()/2 + offset*hand_width/2
-            c.targety = prox.window.getHeight() - 60
+            c.target.x = handpos.x + offset*hand_width/2
+            c.target.y = handpos.y
             if i == hover_card then
-                c.targety = c.targety - 10
+                c.target.y = c.target.y - 10
             end
 
             if hover_card then
@@ -74,7 +75,7 @@ function HandSystem:update(dt)
 end
 
 function HandSystem:requires()
-    return {"components.battle.Hand"}
+    return {"components.battle.Hand","Transform"}
 end
 
 return HandSystem

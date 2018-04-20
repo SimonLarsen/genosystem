@@ -53,6 +53,7 @@ function prox.load()
 
     local hand = Entity()
     hand:add(require("components.battle.Hand")())
+    hand:add(prox.Transform(prox.window.getWidth()/2., prox.window.getHeight()-60))
     local battle = Entity()
     battle:add(require("components.battle.Battle")(party[1], party[2], card_index, hand))
 
