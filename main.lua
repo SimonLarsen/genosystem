@@ -5,14 +5,14 @@ local Parser = require("cards.Parser")
 AssetManager = require("core.AssetManager")
 
 local function readDeckFile(path, card_index)
+    local csv = require("lua-csv.lua.csv")
+    local f = csv.open(path, {header=true})
     local deck = {}
-    for line in love.filesystem.lines(path) do
-        local parts = prox.string.split(line, " ")
-        local id = parts[1]
-        assert(card_index[id], "Invalid card id: " .. id)
-        local count = tonumber(parts[2])
+    for e in f:lines() do
+        assert(card_index[e.id], "Invalid card id: " .. e.id)
+        local count = tonumber(e.count)
         for i=1,count do
-            table.insert(deck, card_index[id])
+            table.insert(deck, card_index[e.id])
         end
     end
     return deck
@@ -30,33 +30,33 @@ function prox.load()
 
     local parser = Parser()
     local card_index = parser:readCards("data/cards.csv")
-    local deck = readDeckFile("data/decks/test1.txt", card_index)
-
-    local names = {
-        {"Anders","Preben","Thomas"},
-        {"Magle 1","Magle 2","Magle 3"}
-    }
+    local deck = readDeckFile("data/decks/test1.csv", card_index)
 
     prox.engine:addSystem(require("systems.logic.BattleSystem")())
     prox.engine:addSystem(require("systems.logic.CardSystem")())
     prox.engine:addSystem(require("systems.logic.HandSystem")())
     prox.engine:addSystem(require("systems.graphics.IndicatorSystem")())
 
-    local party = {}
-    for i=1,2 do
-        party[i] = {}
-        for j=1,3 do
-            local p = require("components.battle.Player")(names[i][j], deck)
-            table.insert(party[i], p)
-        end
-    end
+    local player = require("components.battle.Player")(1, "Anders", deck)
+    local enemy = require("components.battle.Player")(2, "Preben", deck)
 
-    local hand = Entity()
-    hand:add(require("components.battle.Hand")())
-    hand:add(prox.Transform(prox.window.getWidth()/2., prox.window.getHeight()-60))
+    local player_hand = Entity()
+    player_hand:add(require("components.battle.Hand")(1))
+    player_hand:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()-55))
+
+    local enemy_hand = Entity()
+    enemy_hand:add(require("components.battle.Hand")(2))
+    enemy_hand:add(prox.Transform(prox.window.getWidth()/2, 55))
+
     local battle = Entity()
-    battle:add(require("components.battle.Battle")(party[1], party[2], card_index, hand))
+    battle:add(require("components.battle.Battle")(
+        player, enemy,
+        player_hand:get("components.battle.Hand"),
+        enemy_hand:get("components.battle.Hand"),
+        card_index
+    ))
 
     prox.engine:addEntity(battle)
-    prox.engine:addEntity(hand)
+    prox.engine:addEntity(player_hand)
+    prox.engine:addEntity(enemy_hand)
 end

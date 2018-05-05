@@ -65,7 +65,7 @@ function Parser:buildGrammar()
     local str = lpeg.alpha * lpeg.alnum^0 / tostring
     local number = lpeg.digit^1 / tonumber
     local arg = bool + number + str
-    local target = (P"self" + "target" + "party" + "enemies") / tostring
+    local target = (P"self" + "enemy") / tostring
     local op = (P">" + "<" + ">=" + "<=" + "==" + "!=") / tostring
 
     local effect = str * (WS * arg)^0 / toeffect(effects)

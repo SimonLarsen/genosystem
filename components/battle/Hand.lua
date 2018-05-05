@@ -5,9 +5,10 @@ local Hand = class("components.battle.Hand")
 
 local Pile = require("battle.Pile")
 
-function Hand:initialize()
+function Hand:initialize(player)
     self.cards = {}
     self.active = nil
+    self.player = player
 end
 
 return Hand

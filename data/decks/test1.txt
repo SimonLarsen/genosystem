@@ -1,5 +1,0 @@
-recover2 5
-strike1 5
-strike2 5
-seppuku1 3
-infect2 5

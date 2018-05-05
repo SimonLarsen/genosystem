@@ -16,25 +16,24 @@ Battle.static.PHASE_REACTIVE = 1
 -- @param party2 Table of player entities for second party.
 -- @param card_index Table of all @{cards.Card} definitions.
 -- @param hand Entity of current battle.
-function Battle:initialize(party1, party2, card_index, hand)
-    self.party = {party1, party2}
+function Battle:initialize(player1, player2, hand1, hand2, card_index)
+    self.players = {player1, player2}
+    self.hands = {hand1, hand2}
 
     self.card_index = card_index
 
     self.state = Battle.static.STATE_INIT
     self.phase = Battle.static.PHASE_ACTIVE
-    self.current_party = 1
     self.current_player = 1
     self.effects = {}
-    self.hand = hand
 end
 
 function Battle:currentPlayer()
-    return self.party[self.current_party][self.current_player]
+    return self.players[self.current_player]
 end
 
-function Battle:currentParty()
-    return self.party[self.current_party]
+function Battle:currentHand()
+    return self.hands[self.current_player]
 end
 
 return Battle

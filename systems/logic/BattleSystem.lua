@@ -10,7 +10,7 @@ local TargetEffect = require("cards.TargetEffect")
 local CardEffect = require("cards.CardEffect")
 
 local SelectTargetEvent = require("events.SelectTargetEvent")
-local MAX_ACTIONS = 5
+local MAX_ACTIONS = 3
 local HAND_SIZE = 5
 
 local function make_card_entity(battle, card, x, y, z)
@@ -18,44 +18,26 @@ local function make_card_entity(battle, card, x, y, z)
     e:add(prox.Transform(x, y, z))
     e:add(prox.Sprite(AssetManager.getCardImage(card.id)))
     e:add(Card(card))
-
-    local hand = battle.hand:get("components.battle.Hand")
-    table.insert(hand.cards, e)
     prox.engine:addEntity(e)
     return e
 end
 
 local function make_indicator_entity(battle, player, type, value, token)
-    for i=1,2 do
-        for j=1,#battle.party[i] do
-            if player == battle.party[i][j] then
-                local e = Entity()
-                e:add(prox.Tween())
+    local e = Entity()
+    e:add(prox.Tween())
 
-                local x, y, targetx, targety
-                if type == Indicator.static.TYPE_DEAL then
-                    x, y = prox.window.getWidth()/2, prox.window.getHeight()/2-40
-                    targetx, targety = 50+(i-1)*540, 49+(j-1)*78
-                    e:add(prox.Transform(x, y))
-                    e:add(Indicator(type, 1.5, value, token))
-
-                    e:get("Tween"):add(0.75, e:get("Transform"), {x=targetx, y=targety}, "inOutQuad")
-                else
-                    x, y = 50+(i-1)*540, 52+(j-1)*78
-                    targetx, targety = x, y-5
-                    e:add(prox.Transform(x, y))
-                    e:add(Indicator(type, 1.5, value))
-                    e:get("Tween"):add(0.5, e:get("Transform"), {x=targetx, y=targety}, "outQuad")
-                    e:get("Tween"):add(1.0, e:get("components.battle.Indicator"), {alpha=0},
-                        function(t,b,c,d) return prox.tween.easing.linear(t*2-d,b,c,d)
-                    end)
-                end
-                prox.engine:addEntity(e)
-                return e
-            end
-        end
-    end
-    error("Trying to add indicator for unknown player")
+    local x, y
+    x = prox.window.getWidth()-32
+    if player.id == 1 then y = prox.window.getHeight()-32 else y = 32 end
+    local targetx, targety = x, y-5
+    e:add(prox.Transform(x, y))
+    e:add(Indicator(type, 1.5, value))
+    e:get("Tween"):add(0.5, e:get("Transform"), {x=targetx, y=targety}, "outQuad")
+    e:get("Tween"):add(1.0, e:get("components.battle.Indicator"), {alpha=0},
+        function(t,b,c,d) return prox.tween.easing.linear(t*2-d,b,c,d)
+    end)
+    prox.engine:addEntity(e)
+    return e
 end
 
 function BattleSystem:initialize()
@@ -72,10 +54,6 @@ end
 function BattleSystem:update(dt)
     local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
     local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
-    local img_portrait = prox.resources.getImage("data/images/portrait.png")
-    local img_portrait_dead = prox.resources.getImage("data/images/portrait_dead.png")
-    local img_portrait_active = prox.resources.getImage("data/images/portrait_active.png")
-    local img_portrait_target = prox.resources.getImage("data/images/portrait_target.png")
 
     prox.resources.setFont(text_font)
 
@@ -83,38 +61,17 @@ function BattleSystem:update(dt)
         local battle = e:get("components.battle.Battle")
 
         if battle.state == Battle.static.STATE_INIT then
+            for _, player in ipairs(battle.players) do
+                self:drawCard(battle, player, HAND_SIZE)
+            end
             battle.state = Battle.static.STATE_PREPARE
 
-            for _,party in ipairs(battle.party) do
-                for _,player in ipairs(party) do
-                    while #player.hand < HAND_SIZE and #player.deck > 0 do
-                        player:draw()
-                    end
-                end
-            end
-
         elseif battle.state == Battle.static.STATE_PREPARE then
-            local player = battle:currentPlayer()
-            local hand = battle.hand:get("components.battle.Hand")
-            for _, v in ipairs(hand.cards) do
-                prox.engine:removeEntity(v)
-            end
-            hand.cards = {}
-            hand.active = nil
-
-            for i, card in ipairs(player.hand) do
-                make_card_entity(battle, card, prox.window.getWidth()/2, prox.window.getHeight()+50, 1 - (i-1) / #player.hand)
-            end
-
-
-            if #player.hand < HAND_SIZE then
-                self:drawCard(battle, player, HAND_SIZE-#player.hand)
-            end
-
+            self:drawCard(battle, battle:currentPlayer(), HAND_SIZE-#battle:currentPlayer().hand)
             battle.state = Battle.static.STATE_PLAY_CARD
 
         elseif battle.state == Battle.static.STATE_PLAY_CARD then
-            if prox.gui.Button("End turn", {font=title_font}, 8, prox.window.getHeight()-30, 70, 24).hit then
+            if prox.gui.Button("End turn", {font=title_font}, 10, prox.window.getHeight()-30, 70, 24).hit then
                 self:endTurn(battle)
             end
 
@@ -122,54 +79,29 @@ function BattleSystem:update(dt)
             if #battle.effects > 0 then
                 self:resolve(battle)
             else
-                if battle.phase == Battle.static.PHASE_ACTIVE then
-                    battle.state = Battle.static.STATE_PLAY_CARD
-                    local _, hand = next(prox.engine:getEntitiesWithComponent("components.battle.Hand"))
-                    hand = hand:get("components.battle.Hand")
-                    prox.engine:removeEntity(hand.active)
-                    hand.active = nil
-                else
-                end
-            end
-
-        elseif battle.state == Battle.static.STATE_TARGET then
-            prox.gui.Label("Select target!", {font=title_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-140, 200, 20)
-            local effect_text = self:getEffectText(battle)
-            prox.gui.Label(effect_text, {font=text_font}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-120, 200, 20)
-        end
-
-        for i=1,2 do
-            prox.gui.layout:reset(74+(i-1)*372, 27, 4, 4)
-            for j=1,#battle.party[i] do
-                if battle.state == Battle.static.STATE_TARGET and battle.party[i][j].alive then
-                    if prox.gui.ImageButton(img_portrait_target, 10+(i-1)*540, 10+(j-1)*78).hit then
-                        prox.events:fireEvent(SelectTargetEvent(i, j))
-                    end
-                end
-                if battle.party[i][j] == battle:currentPlayer() then
-                    prox.gui.Image(img_portrait_active, 12+(i-1)*540, 12+(j-1)*78)
-                elseif battle.party[i][j].alive == true then
-                    prox.gui.Image(img_portrait, 12+(i-1)*540, 12+(j-1)*78)
-                else
-                    prox.gui.Image(img_portrait_dead, 12+(i-1)*540, 12+(j-1)*78)
-                end
-
-                local p = battle.party[i][j]
-                prox.gui.Label(p.name,                    prox.gui.layout:row(120, 8))
-                prox.gui.Label("Hand: " .. #p.hand,       prox.gui.layout:row())
-                prox.gui.Label("Deck: " .. #p.deck,       prox.gui.layout:row())
-                prox.gui.Label("Discard: " .. #p.discard, prox.gui.layout:row())
-                prox.gui.layout:row(120, 26)
+                local hand = battle:currentHand()
+                prox.engine:removeEntity(hand.active)
+                hand.active = nil
+                battle.state = Battle.static.STATE_PLAY_CARD
             end
         end
+
+        prox.gui.Label(
+            string.format("Deck: %d\nDiscard: %d\nWounded: %d", #battle.players[1].deck, #battle.players[1].discard, #battle.players[1].wounded),
+            {font=title_font, align="right"}, prox.window.getWidth()-85, prox.window.getHeight()-65, 80, 60
+        )
+        prox.gui.Label(
+            string.format("Deck: %d\nDiscard: %d\nWounded: %d", #battle.players[2].deck, #battle.players[2].discard, #battle.players[2].wounded),
+            {font=title_font, align="right"}, prox.window.getWidth()-85, 5, 80, 60
+        )
     end
 end
 
 function BattleSystem:onPlayCard(event)
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
-        if battle.state == Battle.static.STATE_PLAY_CARD then
-            local player = battle:currentPlayer()
+        if battle.state == Battle.static.STATE_PLAY_CARD and event.player == 1 then
+            local player = battle.players[1]
             assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
 
             battle.effects = {}
@@ -179,7 +111,7 @@ function BattleSystem:onPlayCard(event)
             table.insert(player.discard, 1, card)
             self:playCard(card, {}, battle.effects)
 
-            local hand = battle.hand:get("components.battle.Hand")
+            local hand = battle:currentHand()
             local hc = hand.cards[event.card]
             table.remove(hand.cards, event.card)
             hand.active = hc
@@ -226,13 +158,9 @@ end
 -- @return Table of @{components.battle.Player} instances.
 function BattleSystem:getTargets(battle, target)
     if target == "self" then
-        return {battle:currentPlayer()}
-    elseif target == "target" then
-        return {battle.target}
-    elseif target == "party" then
-        return battle.party[battle.current_party]
-    elseif target == "enemies" then
-        return battle.party[(battle.current_party % 2)+1]
+        return {battle.players[battle.current_player]}
+    elseif target == "enemy" then
+        return {battle.players[battle.current_player % 2 + 1]}
     else
         error(string.format("Unknown target \"%s\"", target))
     end
@@ -304,21 +232,17 @@ function BattleSystem:endTurn(battle)
 end
 
 function BattleSystem:drawCard(battle, player, count)
-    local drawn = 0
     for i=1, count do
         local card = player:draw()
         if card == nil then
             break
         end
-        if player == battle:currentPlayer() then
-            make_card_entity(battle, card, prox.window.getWidth()-38, prox.window.getHeight()-51, i)
-        end
-        drawn = drawn + 1
+        local e = make_card_entity(battle, card, prox.window.getWidth()/2, prox.window.getHeight()/2, i)
+        local hand = battle.hands[player.id]
+        table.insert(hand.cards, e)
+        table.insert(player.hand, card)
     end
-
-    if drawn > 0 then
-        make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, drawn)
-    end
+    make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, count)
 end
 
 function BattleSystem:dealCard(battle, player, id, pile, count)
@@ -338,23 +262,11 @@ function BattleSystem:dealCard(battle, player, id, pile, count)
             make_card_entity(battle, card, prox.window.getWidth() / 2, prox.window.getHeight() / 2 - 40)
         end
     end
-
-    if player ~= battle:currentPlayer() or pile ~= "hand"then
-        make_indicator_entity(battle, player, Indicator.static.TYPE_DEAL, count, id)
-    end
 end
 
 function BattleSystem:hitPlayer(battle, player, damage)
-    local hand = battle.hand:get("components.battle.Hand")
-    for i=1, damage do
-        local index = player:hit()
-        if index ~= nil and player == battle:currentPlayer() then
-            local e = hand.cards[index]
-            table.remove(hand.cards, index)
-            prox.engine:removeEntity(e)
-        end
-    end
-
+    local hand = battle.hands[player.id]
+    local hits = player:hit(damage)
     make_indicator_entity(battle, player, Indicator.static.TYPE_DAMAGE, damage)
 end
 
