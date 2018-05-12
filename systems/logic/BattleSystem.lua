@@ -16,7 +16,7 @@ local HAND_SIZE = 5
 local function make_card_entity(battle, card, x, y, z)
     local e = Entity()
     e:add(prox.Transform(x, y, z))
-    e:add(prox.Sprite(AssetManager.getCardImage(card.id)))
+    e:add(prox.Sprite({image=AssetManager.getCardImagePath(card.id)}))
     e:add(Card(card))
     prox.engine:addEntity(e)
     return e
