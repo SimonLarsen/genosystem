@@ -13,11 +13,18 @@ local SelectTargetEvent = require("events.SelectTargetEvent")
 local MAX_ACTIONS = 3
 local HAND_SIZE = 5
 
-local function make_card_entity(battle, card, x, y, z)
+local function make_card_entity(battle, player, card, x, y, z)
     local e = Entity()
     e:add(prox.Transform(x, y, z))
-    e:add(prox.Sprite({image=AssetManager.getCardImagePath(card.id)}))
-    e:add(Card(card))
+    e:add(prox.Animator(AssetManager.getCardAnimator(card.id)))
+    local cc = Card(card)
+    cc.dir = 1
+    if player.id == 1 then
+        cc.target_dir = 0
+    else
+        cc.target_dir = 1
+    end
+    e:add(cc)
     prox.engine:addEntity(e)
     return e
 end
@@ -237,7 +244,7 @@ function BattleSystem:drawCard(battle, player, count)
         if card == nil then
             break
         end
-        local e = make_card_entity(battle, card, prox.window.getWidth()/2, prox.window.getHeight()/2, i)
+        local e = make_card_entity(battle, player, card, prox.window.getWidth()/2, prox.window.getHeight()/2, i)
         local hand = battle.hands[player.id]
         table.insert(hand.cards, e)
         table.insert(player.hand, card)
