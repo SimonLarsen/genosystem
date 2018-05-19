@@ -25,6 +25,7 @@ function Battle:initialize(player1, player2, hand1, hand2, card_index)
     self.state = Battle.static.STATE_INIT
     self.phase = Battle.static.PHASE_ACTIVE
     self.current_player = 1
+    self.actions = 0
     self.effects = {}
 end
 

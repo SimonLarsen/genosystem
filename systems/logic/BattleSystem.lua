@@ -18,11 +18,10 @@ local function make_card_entity(battle, player, card, x, y, z)
     e:add(prox.Transform(x, y, z))
     e:add(prox.Animator(AssetManager.getCardAnimator(card.id)))
     local cc = Card(card)
-    cc.dir = 1
+    cc.dir = 0 --1
+    cc.target_dir = 0 --1
     if player.id == 1 then
         cc.target_dir = 0
-    else
-        cc.target_dir = 1
     end
     e:add(cc)
     prox.engine:addEntity(e)
@@ -59,8 +58,8 @@ function BattleSystem:requires()
 end
 
 function BattleSystem:update(dt)
-    local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
-    local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
+    local text_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
+    local title_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 13)
 
     prox.resources.setFont(text_font)
 
@@ -69,13 +68,14 @@ function BattleSystem:update(dt)
 
         if battle.state == Battle.static.STATE_INIT then
             for _, player in ipairs(battle.players) do
-                self:drawCard(battle, player, HAND_SIZE)
+                self:drawCards(battle, player, HAND_SIZE)
             end
             battle.state = Battle.static.STATE_PREPARE
 
         elseif battle.state == Battle.static.STATE_PREPARE then
-            self:drawCard(battle, battle:currentPlayer(), HAND_SIZE-#battle:currentPlayer().hand)
+            self:drawCards(battle, battle:currentPlayer(), HAND_SIZE-#battle:currentPlayer().hand)
             battle.state = Battle.static.STATE_PLAY_CARD
+            battle.actions = MAX_ACTIONS
 
         elseif battle.state == Battle.static.STATE_PLAY_CARD then
             if prox.gui.Button("End turn", {font=title_font}, 10, prox.window.getHeight()-30, 70, 24).hit then
@@ -107,16 +107,19 @@ end
 function BattleSystem:onPlayCard(event)
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
-        if battle.state == Battle.static.STATE_PLAY_CARD and event.player == 1 then
-            local player = battle.players[1]
+        if battle.state == Battle.static.STATE_PLAY_CARD and event.player == battle.current_player then
+            local player = battle.players[event.player]
             assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
 
             battle.effects = {}
             local variables = {}
             local card = player.hand[event.card]
             table.remove(player.hand, event.card)
-            table.insert(player.discard, 1, card)
             self:playCard(card, {}, battle.effects)
+
+            if not card:isToken() then
+                table.insert(player.discard, 1, card)
+            end
 
             local hand = battle:currentHand()
             local hc = hand.cards[event.card]
@@ -187,20 +190,26 @@ function BattleSystem:resolve(battle)
         local type = effect.type
         if type == "deal" then
             for _, target in ipairs(targets) do
-                self:dealCard(battle, target, effect.card, effect.pile, effect.count)
+                self:dealCards(battle, target, effect.card, effect.pile, effect.count)
             end
         elseif type == "draw" then
             for _, target in ipairs(targets) do
-                self:drawCard(battle, target, effect.count)
+                self:drawCards(battle, target, effect.count)
             end
         elseif type == "hit" then
             for _, target in ipairs(targets) do
                 self:hitPlayer(battle, target, effect.count)
             end
         elseif type == "replace" then
-            error("\"replace\" card effect not implemented.")
+            for _, target in ipairs(targets) do
+                self:replaceCards(battle, target, effect.card, effect.count)
+            end
         elseif type == "restore" then
-            error("\"restore\" card effect not implemented.")
+            for _, target in ipairs(targets) do
+                self:restoreCards(battle, target, effect.count)
+            end
+        elseif type == "actions" then
+            self:gainActions(battle, effect.count)
         end
     else
         error(string.format("Unknown card effect type: \"%s\"", e))
@@ -228,17 +237,15 @@ function BattleSystem:getEffectText(battle)
 end
 
 function BattleSystem:endTurn(battle)
-    repeat
-        battle.current_player = battle.current_player + 1
-        if battle.current_player > #battle:currentParty() then
-            battle.current_party = (battle.current_party % 2) + 1
-            battle.current_player = 1
-        end
-    until battle:currentPlayer().alive == true
+    battle.current_player = battle.current_player % 2 + 1
     battle.state = Battle.static.STATE_PREPARE
 end
 
-function BattleSystem:drawCard(battle, player, count)
+function BattleSystem:drawCards(battle, player, count)
+    if count <= 0 then
+        return
+    end
+
     for i=1, count do
         local card = player:draw()
         if card == nil then
@@ -252,11 +259,15 @@ function BattleSystem:drawCard(battle, player, count)
     make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, count)
 end
 
-function BattleSystem:dealCard(battle, player, id, pile, count)
-    local card = battle.card_index[id]
+function BattleSystem:dealCards(battle, player, card_id, pile, count)
+    local card = battle.card_index[card_id]
     for i=1, count do
         if pile == "hand" then
             table.insert(player.hand, card)
+
+            local e = make_card_entity(battle, player, card, prox.window.getWidth()/2, prox.window.getHeight()/2)
+            local hand = battle.hands[player.id]
+            table.insert(hand.cards, e)
         elseif pile == "deck" then
             table.insert(player.deck, 1, card)
         elseif pile == "discard" then
@@ -264,11 +275,38 @@ function BattleSystem:dealCard(battle, player, id, pile, count)
         else
             error(string.format("Unknown card pile target: \"%s\"", pile))
         end
-
-        if player == battle:currentPlayer() and pile == "hand" then
-            make_card_entity(battle, card, prox.window.getWidth() / 2, prox.window.getHeight() / 2 - 40)
-        end
     end
+end
+
+function BattleSystem:replaceCards(battle, player, card_id, count)
+    local card = battle.card_index[card_id]
+    local hand = battle.hands[player.id]
+
+    count = math.min(count, #player.hand)
+    for i=1, count do
+        local index = love.math.random(#player.hand)
+        player:discardCard(index)
+        prox.engine:removeEntity(hand.cards[index])
+        table.remove(hand.cards, index)
+    end
+
+    self:dealCards(battle, player, card_id, "hand", count)
+end
+
+function BattleSystem:restoreCards(battle, player, count)
+    count = math.min(count, #player.wounded)
+    for i=1, count do
+        local card = player.wounded[1]
+        table.remove(player.wounded, 1)
+        table.insert(player.discard, 1, card)
+    end
+
+    make_indicator_entity(battle, player, Indicator.static.TYPE_RESTORE, count)
+end
+
+function BattleSystem:gainActions(battle, count)
+    battle.actions = battle.actions + count
+    make_indicator_entity(battle, battle:currentPlayer(), Indicator.static.TYPE_GAIN_ACTIONS, count)
 end
 
 function BattleSystem:hitPlayer(battle, player, damage)

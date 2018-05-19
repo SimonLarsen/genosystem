@@ -9,8 +9,8 @@ function HandSystem:initialize()
 end
 
 function HandSystem:update(dt)
-    local text_font = prox.resources.getFont("data/fonts/Lato-Regular.ttf", 10)
-    local title_font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 13)
+    local text_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
+    local title_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 13)
 
     for _, e in pairs(self.targets) do
         local hand = e:get("components.battle.Hand")
@@ -23,7 +23,7 @@ function HandSystem:update(dt)
         local mx, my = prox.mouse.getPosition()
 
         -- find hovered card
-        if hand.player == 1 then
+        if true then
             for i, card in ipairs(hand.cards) do
                 local t = card:get("Transform")
                 local dx = math.abs(mx - t.x)
@@ -60,11 +60,9 @@ function HandSystem:update(dt)
             -- move hovered card up
             if i == hover_card then
                 c.target.y = c.target.y - 10
-            end
-
-            -- change z order
-            if hover_card then
-                card:get("Transform").z = math.abs(i - hover_card)
+                card:get("Transform").z = 0
+            else
+                card:get("Transform").z = i
             end
         end
 
@@ -72,7 +70,7 @@ function HandSystem:update(dt)
             local card = hand.cards[hover_card]
             local cc = card:get("components.battle.Card").card
             local t = card:get("Transform")
-            prox.gui.Label(cc.text, prox.window.getWidth()/2-60, prox.window.getHeight()/2-20, 120, 60)
+            prox.gui.Label(cc:getText(), prox.window.getWidth()/2-100, prox.window.getHeight()/2-20, 200, 60)
             prox.gui.Label(cc.name, {font=title_font}, prox.window.getWidth()/2-60, prox.window.getHeight()/2-40, 120, 20)
 
             if prox.mouse.wasPressed(1) then

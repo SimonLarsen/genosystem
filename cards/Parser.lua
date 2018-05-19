@@ -35,6 +35,10 @@ local function toeffect(effects)
     return function(id, ...) return effects[id](...) end
 end
 
+local function checkstring(s)
+    return s:gsub("\\n", "\n")
+end
+
 local function toboolean(s)
     s = string.lower(s)
     return s == "true" or s == "1" or s == "yes"
@@ -112,13 +116,14 @@ function Parser:readCards(path)
             e.id,
             e.name,
             toboolean(e.token),
-            toboolean(e.decoy),
-            e.tag,
+            e.type,
             tonumber(e.buy),
             tonumber(e.scrap),
+            tonumber(e.block),
             self:parse(e.active),
             self:parse(e.reactive),
-            e.text,
+            self:parse(e.wound),
+            checkstring(e.text),
             e.description
         )
         cards[e.id] = c

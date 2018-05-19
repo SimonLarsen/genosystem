@@ -5,8 +5,9 @@ local IndicatorSystem = class("systems.graphics.IndicatorSystem", System)
 local Indicator = require("components.battle.Indicator")
 
 local images = {
-    [Indicator.static.TYPE_DAMAGE] = "data/images/indicators/damage.png",
-    [Indicator.static.TYPE_DRAW] = "data/images/indicators/draw.png"
+    [Indicator.static.TYPE_DAMAGE]  = "data/images/indicators/damage.png",
+    [Indicator.static.TYPE_DRAW]    = "data/images/indicators/draw.png",
+    [Indicator.static.TYPE_RESTORE] = "data/images/indicators/restore.png"
 }
 
 function IndicatorSystem:initialize()
