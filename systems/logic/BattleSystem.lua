@@ -93,13 +93,21 @@ function BattleSystem:update(dt)
             end
         end
 
+        if battle.current_player == 1 then
+            prox.gui.Label("→→→", {font=title_font}, 128, prox.window.getHeight()-71, 64, 32)
+        else
+            prox.gui.Label("→→→", {font=title_font}, 128, 39, 64, 32)
+        end
+
+        prox.gui.Label("Actions: " .. battle.actions, {font=title_font, align="left"}, 16, prox.window.getHeight()/2-32, 200, 64)
+
         prox.gui.Label(
             string.format("Deck: %d\nDiscard: %d\nWounded: %d", #battle.players[1].deck, #battle.players[1].discard, #battle.players[1].wounded),
-            {font=title_font, align="right"}, prox.window.getWidth()-85, prox.window.getHeight()-65, 80, 60
+            {font=title_font, align="right"}, prox.window.getWidth()-105, prox.window.getHeight()-65, 100, 60
         )
         prox.gui.Label(
             string.format("Deck: %d\nDiscard: %d\nWounded: %d", #battle.players[2].deck, #battle.players[2].discard, #battle.players[2].wounded),
-            {font=title_font, align="right"}, prox.window.getWidth()-85, 5, 80, 60
+            {font=title_font, align="right"}, prox.window.getWidth()-105, 5, 100, 60
         )
     end
 end
@@ -107,7 +115,9 @@ end
 function BattleSystem:onPlayCard(event)
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
-        if battle.state == Battle.static.STATE_PLAY_CARD and event.player == battle.current_player then
+        if battle.state == Battle.static.STATE_PLAY_CARD
+        and battle.actions > 0
+        and event.player == battle.current_player then
             local player = battle.players[event.player]
             assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
 
@@ -126,6 +136,7 @@ function BattleSystem:onPlayCard(event)
             table.remove(hand.cards, event.card)
             hand.active = hc
             battle.state = Battle.static.STATE_RESOLVE
+            battle.actions = battle.actions - 1
         end
     end
 end
@@ -208,11 +219,13 @@ function BattleSystem:resolve(battle)
             for _, target in ipairs(targets) do
                 self:restoreCards(battle, target, effect.count)
             end
-        elseif type == "actions" then
+        elseif type == "gainaction" then
             self:gainActions(battle, effect.count)
+        else
+            error(string.format("Unknown card effect type: \"%s\"", type))
         end
     else
-        error(string.format("Unknown card effect type: \"%s\"", e))
+        error(string.format("Unknown card effect event: \"%s\"", e))
     end
 end
 
@@ -306,7 +319,7 @@ end
 
 function BattleSystem:gainActions(battle, count)
     battle.actions = battle.actions + count
-    make_indicator_entity(battle, battle:currentPlayer(), Indicator.static.TYPE_GAIN_ACTIONS, count)
+    make_indicator_entity(battle, battle:currentPlayer(), Indicator.static.TYPE_GAIN_ACTION, count)
 end
 
 function BattleSystem:hitPlayer(battle, player, damage)
