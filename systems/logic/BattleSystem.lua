@@ -298,9 +298,9 @@ function BattleSystem:dealCards(battle, player, card_id, pile, count)
             local hand = battle.hands[player.id]
             table.insert(hand.cards, e)
         elseif pile == "deck" then
-            table.insert(player.deck, 1, card)
+            table.insert(player.deck, love.math.random(#player.deck+1), card)
         elseif pile == "discard" then
-            table.insert(player.discard, 1, card)
+            table.insert(player.discard, love.math.random(#player.discard+1), card)
         else
             error(string.format("Unknown card pile target: \"%s\"", pile))
         end
