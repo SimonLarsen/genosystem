@@ -207,6 +207,10 @@ function BattleSystem:resolve(battle)
             for _, target in ipairs(targets) do
                 self:drawCards(battle, target, effect.count)
             end
+        elseif type == "discard" then
+            for _, target in ipairs(targets) do
+                self:discardCards(battle, target, effect.count)
+            end
         elseif type == "hit" then
             for _, target in ipairs(targets) do
                 self:hitPlayer(battle, target, effect.count)
@@ -255,9 +259,7 @@ function BattleSystem:endTurn(battle)
 end
 
 function BattleSystem:drawCards(battle, player, count)
-    if count <= 0 then
-        return
-    end
+    if count <= 0 then return end
 
     for i=1, count do
         local card = player:draw()
@@ -270,6 +272,20 @@ function BattleSystem:drawCards(battle, player, count)
         table.insert(player.hand, card)
     end
     make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, count)
+end
+
+function BattleSystem:discardCards(battle, player, count)
+    if count <= 0 then return end
+    count = math.min(count, #player.hand)
+    local hand = battle.hands[player.id]
+    for i=1, count do
+        local index = love.math.random(#player.hand)
+        player:discardCard(index)
+        prox.engine:removeEntity(hand.cards[index])
+        table.remove(hand.cards, index)
+    end
+
+    make_indicator_entity(battle, player, Indicator.static.TYPE_DISCARD, count)
 end
 
 function BattleSystem:dealCards(battle, player, card_id, pile, count)
