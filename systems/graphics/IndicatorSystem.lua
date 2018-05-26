@@ -29,13 +29,7 @@ function IndicatorSystem:update(dt)
         local t = e:get("Transform")
         local indicator = e:get("components.battle.Indicator")
 
-        local img
-        if indicator.type == Indicator.static.TYPE_DEAL then
-            img = AssetManager.getCardImage(indicator.token)
-        else
-            img = prox.resources.getImage(images[indicator.type])
-        end
-
+        local img = prox.resources.getImage(images[indicator.type])
         local imgw, imgh = img:getDimensions()
         local x,y = math.floor(t.x+0.5), math.floor(t.y+0.5)
         love.graphics.setColor(255, 255, 255, indicator.alpha*255)
