@@ -6,7 +6,8 @@ AssetManager = require("core.AssetManager")
 
 local function readDeckFile(path, card_index)
     local csv = require("lua-csv.lua.csv")
-    local f = csv.open(path, {header=true})
+    local data = love.filesystem.read(path)
+    local f = csv.openstring(data, {header=true})
     local deck = {}
     for e in f:lines() do
         assert(card_index[e.id], "Invalid card id: " .. e.id)

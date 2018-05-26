@@ -109,7 +109,8 @@ end
 function Parser:readCards(path)
     local csv = require("lua-csv.lua.csv")
 
-    local f = csv.open(path, {header=true})
+    local data = love.filesystem.read(path)
+    local f = csv.openstring(data, {header=true})
     local cards = {}
     for e in f:lines() do
         local c = Card(
