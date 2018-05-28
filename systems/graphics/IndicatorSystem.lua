@@ -23,7 +23,7 @@ end
 
 function IndicatorSystem:update(dt)
     local font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 16)
-    local color = {normal={fg={255, 255, 255, 255}}}
+    local color = {normal={fg={1, 1, 1, 1}}}
 
     for _, e in pairs(self.targets) do
         local t = e:get("Transform")
@@ -32,11 +32,11 @@ function IndicatorSystem:update(dt)
         local img = prox.resources.getImage(images[indicator.type])
         local imgw, imgh = img:getDimensions()
         local x,y = math.floor(t.x+0.5), math.floor(t.y+0.5)
-        love.graphics.setColor(255, 255, 255, indicator.alpha*255)
+        love.graphics.setColor(1, 1, 1, indicator.alpha)
         prox.gui.Image(img, x-imgw/2, y-imgh/2)
-        love.graphics.setColor(255, 255, 255, 255)
+        love.graphics.setColor(1, 1, 1, 1)
 
-        color.normal.fg[4] = indicator.alpha*255
+        color.normal.fg[4] = indicator.alpha
         prox.gui.Label(tostring(indicator.value), {font=font, color=color}, x-32, y-32, 64, 64)
 
         indicator.time = indicator.time - dt

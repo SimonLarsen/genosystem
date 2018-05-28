@@ -23,9 +23,9 @@ function prox.load()
     prox.window.set(640, 360, true, 2, false, "scale")
 
     prox.gui.theme.color = {
-        normal  = {bg = { 66, 66, 66}, fg = {255,255,255}},
-        hovered = {bg = { 50,153,187}, fg = {255,255,255}},
-        active  = {bg = {255,153,  0}, fg = {225,225,225}}
+        normal  = {bg = {0.25,0.25,0.25}, fg = {1,1,1}},
+        hovered = {bg = {0.20,0.60,0.73}, fg = {1,1,1}},
+        active  = {bg = {1.00,0.60,0.00}, fg = {1,1,1}}
     }
     prox.gui.theme.cornerRadius = 3
 
