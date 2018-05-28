@@ -8,6 +8,7 @@ function Card:initialize(card)
     self.target = prox.Transform(0, 0)
     self.dir = 0
     self.target_dir = 0
+    self.active = true
 end
 
 return Card

@@ -4,6 +4,7 @@ local BattleSystem = class("systems.logic.BattleSystem", System)
 
 local Battle = require("components.battle.Battle")
 local Card = require("components.battle.Card")
+local Hand = require("components.battle.Hand")
 local Indicator = require("components.battle.Indicator")
 
 local TargetEffect = require("cards.TargetEffect")
@@ -12,39 +13,6 @@ local CardEffect = require("cards.CardEffect")
 local SelectTargetEvent = require("events.SelectTargetEvent")
 local MAX_ACTIONS = 3
 local HAND_SIZE = 5
-
-local function make_card_entity(battle, player, card, x, y, z)
-    local e = Entity()
-    e:add(prox.Transform(x, y, z))
-    e:add(prox.Animator(AssetManager.getCardAnimator(card.id)))
-    local cc = Card(card)
-    cc.dir = 0 --1
-    cc.target_dir = 0 --1
-    if player.id == 1 then
-        cc.target_dir = 0
-    end
-    e:add(cc)
-    prox.engine:addEntity(e)
-    return e
-end
-
-local function make_indicator_entity(battle, player, type, value)
-    local e = Entity()
-    e:add(prox.Tween())
-
-    local x, y
-    x = prox.window.getWidth()-32
-    if player.id == 1 then y = prox.window.getHeight()-32 else y = 32 end
-    local targetx, targety = x, y-5
-    e:add(prox.Transform(x, y))
-    e:add(Indicator(type, 1.0, value))
-    e:get("Tween"):add(0.5, e:get("Transform"), {x=targetx, y=targety}, "outQuad")
-    e:get("Tween"):add(1.0, e:get("components.battle.Indicator"), {alpha=0},
-        function(t,b,c,d) return prox.tween.easing.linear(t*2-d,b,c,d)
-    end)
-    prox.engine:addEntity(e)
-    return e
-end
 
 function BattleSystem:initialize()
     System.initialize(self)
@@ -60,6 +28,7 @@ end
 function BattleSystem:update(dt)
     local text_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
     local title_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 13)
+    local huge_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 32)
 
     prox.resources.setFont(text_font)
 
@@ -77,17 +46,26 @@ function BattleSystem:update(dt)
             battle.state = Battle.static.STATE_PLAY_CARD
             battle.actions = MAX_ACTIONS
 
+            for i, hand in ipairs(battle.hands) do
+                if i == battle.current_player then
+                    hand.state = Hand.static.STATE_ACTIVE
+                else
+                    hand.state = Hand.static.STATE_INACTIVE
+                end
+            end
+
         elseif battle.state == Battle.static.STATE_PLAY_CARD then
-            if prox.gui.Button("End turn", {font=title_font}, 10, prox.window.getHeight()-30, 70, 24).hit then
+            if prox.gui.Button("End turn", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
                 battle.current_player = battle.current_player % 2 + 1
                 battle.state = Battle.static.STATE_PREPARE
             end
 
         elseif battle.state == Battle.static.STATE_REACT then
-            if prox.gui.Button("Don't block", {font=title_font}, 10, prox.window.getHeight()-60).hit then
+            if prox.gui.Button("Don't react", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
+                battle:opponentHand().state = Hand.static.STATE_INACTIVE
                 battle.state = Battle.static.STATE_REACT_DAMAGE
             end
-            prox.gui.Label("Damage: " .. battle.damage, {font=title_font, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32, 200, 64)
+            prox.gui.Label("Damage: " .. battle.damage, {font=title_font, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32)
 
         elseif battle.state == Battle.static.STATE_REACT_DAMAGE then
             self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
@@ -113,9 +91,9 @@ function BattleSystem:update(dt)
         end
 
         if battle.current_player == 1 then
-            prox.gui.Label("→→→", {font=title_font}, 128, prox.window.getHeight()-71, 64, 32)
+            prox.gui.Label("→", {font=huge_font}, 100, prox.window.getHeight()-71, 64, 32)
         else
-            prox.gui.Label("→→→", {font=title_font}, 128, 39, 64, 32)
+            prox.gui.Label("→", {font=huge_font}, 100, 39, 64, 32)
         end
 
         prox.gui.Label("Actions: " .. battle.actions, {font=title_font, align="left"}, 16, prox.window.getHeight()/2-32, 200, 64)
@@ -180,6 +158,7 @@ function BattleSystem:onPlayCard(event)
             table.remove(hand.cards, event.card)
 
             battle.state = Battle.static.STATE_REACT_RESOLVE
+            hand.state = Hand.static.STATE_INACTIVE
         end
     end
 end
@@ -264,6 +243,7 @@ function BattleSystem:resolve(battle)
         if battle.state == Battle.static.STATE_RESOLVE
         and e.target == "enemy" and self:playerCanBlock(target) then
             battle.damage = effect.count
+            battle:opponentHand().state = Hand.static.STATE_REACT
             battle.state = Battle.static.STATE_REACT
         else
             self:hitPlayer(battle, target, effect.count)
@@ -287,13 +267,13 @@ function BattleSystem:effectDrawCards(battle, player, count)
         if card == nil then
             break
         end
-        local e = make_card_entity(battle, player, card, prox.window.getWidth()/2, prox.window.getHeight()/2, i)
+        local e = self:makeCard(battle, player, card)
         local hand = battle.hands[player.id]
         table.insert(hand.cards, e)
         table.insert(player.hand, card)
     end
 
-    make_indicator_entity(battle, player, Indicator.static.TYPE_DRAW, count)
+    self:makeIndicator(battle, player, Indicator.static.TYPE_DRAW, count)
 end
 
 function BattleSystem:effectDiscardCards(battle, player, count)
@@ -307,7 +287,7 @@ function BattleSystem:effectDiscardCards(battle, player, count)
         table.remove(hand.cards, index)
     end
 
-    make_indicator_entity(battle, player, Indicator.static.TYPE_DISCARD, count)
+    self:makeIndicator(battle, player, Indicator.static.TYPE_DISCARD, count)
 end
 
 function BattleSystem:effectDealCards(battle, player, card_id, pile, count)
@@ -315,7 +295,7 @@ function BattleSystem:effectDealCards(battle, player, card_id, pile, count)
     for i=1, count do
         if pile == "hand" then
             table.insert(player.hand, card)
-            local e = make_card_entity(battle, player, card, prox.window.getWidth()/2, prox.window.getHeight()/2)
+            local e = self:makeCard(battle, player, card)
             local hand = battle.hands[player.id]
             table.insert(hand.cards, e)
         elseif pile == "deck" then
@@ -327,7 +307,7 @@ function BattleSystem:effectDealCards(battle, player, card_id, pile, count)
         end
     end
 
-    make_indicator_entity(battle, player, Indicator.static.TYPE_DEAL, count)
+    self:makeIndicator(battle, player, Indicator.static.TYPE_DEAL, count)
 end
 
 function BattleSystem:effectReplaceCards(battle, player, card_id, count)
@@ -353,18 +333,18 @@ function BattleSystem:effectRestoreCards(battle, player, count)
         table.insert(player.discard, 1, card)
     end
 
-    make_indicator_entity(battle, player, Indicator.static.TYPE_RESTORE, count)
+    self:makeIndicator(battle, player, Indicator.static.TYPE_RESTORE, count)
 end
 
 function BattleSystem:effectGainActions(battle, count)
     battle.actions = battle.actions + count
-    make_indicator_entity(battle, battle:currentPlayer(), Indicator.static.TYPE_GAIN_ACTION, count)
+    self:makeIndicator(battle, battle:currentPlayer(), Indicator.static.TYPE_GAIN_ACTION, count)
 end
 
 function BattleSystem:hitPlayer(battle, player, damage)
     local hand = battle.hands[player.id]
     local hits = player:hit(damage)
-    make_indicator_entity(battle, player, Indicator.static.TYPE_DAMAGE, damage)
+    self:makeIndicator(battle, player, Indicator.static.TYPE_DAMAGE, damage)
 end
 
 function BattleSystem:playerCanBlock(player)
@@ -374,6 +354,41 @@ function BattleSystem:playerCanBlock(player)
         end
     end
     return false
+end
+
+function BattleSystem:makeIndicator(battle, player, type, value)
+    local e = Entity()
+    e:add(prox.Tween())
+
+    local x, y
+    x = prox.window.getWidth()-32
+    if player.id == 1 then y = prox.window.getHeight()-32 else y = 32 end
+    local targetx, targety = x, y-5
+    e:add(prox.Transform(x, y))
+    e:add(Indicator(type, 1.0, value))
+    e:get("Tween"):add(0.5, e:get("Transform"), {x=targetx, y=targety}, "outQuad")
+    e:get("Tween"):add(1.0, e:get("components.battle.Indicator"), {alpha=0},
+        function(t,b,c,d) return prox.tween.easing.linear(t*2-d,b,c,d)
+    end)
+    prox.engine:addEntity(e)
+    return e
+end
+
+function BattleSystem:makeCard(battle, player, card)
+    local x, y, z = prox.window.getWidth()/2, prox.window.getHeight()/2, 1
+    local e = Entity()
+    e:add(prox.Transform(x, y, z))
+    e:add(prox.Sprite({image=AssetManager.getCardImagePath("_backside_")}))
+    e:add(prox.Animator(AssetManager.getCardAnimator(card.id)))
+    local cc = Card(card)
+    cc.dir = 1
+    cc.target_dir = 1
+    if player.id == 1 then
+        cc.target_dir = 0
+    end
+    e:add(cc)
+    prox.engine:addEntity(e)
+    return e
 end
 
 return BattleSystem

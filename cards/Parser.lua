@@ -123,7 +123,6 @@ function Parser:readCards(path)
             tonumber(e.block),
             self:parse(e.active),
             self:parse(e.reactive),
-            self:parse(e.wound),
             checkstring(e.text),
             e.description
         )

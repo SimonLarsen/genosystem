@@ -2,7 +2,10 @@
 -- @classmod systems.logic.HandSystem
 local HandSystem = class("systems.logic.HandSystem", System)
 
+local Hand = require("components.battle.Hand")
 local PlayCardEvent = require("events.PlayCardEvent")
+
+local MAX_WIDTH = 225
 
 function HandSystem:initialize()
     System.initialize(self)
@@ -23,7 +26,7 @@ function HandSystem:update(dt)
         local mx, my = prox.mouse.getPosition()
 
         -- find hovered card
-        if true then
+        if hand.state ~= Hand.static.STATE_INACTIVE then
             for i, card in ipairs(hand.cards) do
                 local t = card:get("Transform")
                 local dx = math.abs(mx - t.x)
@@ -33,13 +36,6 @@ function HandSystem:update(dt)
                     hover_card = i
                 end
             end
-        end
-
-        -- move active card to center of screen
-        if hand.active then
-            local c = hand.active:get("components.battle.Card")
-            c.target.x = prox.window.getWidth() / 2
-            c.target.y = prox.window.getHeight() / 2
         end
 
         for i, card in ipairs(hand.cards) do
@@ -52,17 +48,25 @@ function HandSystem:update(dt)
             else
                 offset = 0
             end
-            local hand_width = math.max(math.min((ncards-1) * 74, 200), 10)
+            local hand_width = math.max(math.min((ncards-1) * 74, MAX_WIDTH), 10)
 
             c.target.x = handpos.x + offset*hand_width/2
             c.target.y = handpos.y
+            card:get("Transform").z = i
+
+            local col = card:get("Sprite").color
+            if hand.state == Hand.static.STATE_REACT and not c.card.block then
+                col[1], col[2], col[3] = 100, 100, 100
+                c.target.y = c.target.y + 10
+                card:get("Transform").z = i + 10
+            else
+                col[1], col[2], col[3] = 255, 255, 255
+            end
 
             -- move hovered card up
             if i == hover_card then
                 c.target.y = c.target.y - 10
                 card:get("Transform").z = 0
-            else
-                card:get("Transform").z = i
             end
         end
 

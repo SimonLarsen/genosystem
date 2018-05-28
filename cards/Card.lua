@@ -13,10 +13,9 @@ local Card = class("cards.Card")
 -- @param block (number) Block value (or nil)
 -- @param active Active card effect tree
 -- @param reactive Reactive card effect tree
--- @param wound On-wound card effect tree
 -- @param text (string) Card effect description
 -- @param description (string) Long card lore description
-function Card:initialize(id, name, token, type, buy, scrap, block, active, reactive, wound, text, description)
+function Card:initialize(id, name, token, type, buy, scrap, block, active, reactive, text, description)
     self.id = id
     self.name = name
     self.token = token
@@ -26,7 +25,6 @@ function Card:initialize(id, name, token, type, buy, scrap, block, active, react
     self.block = block
     self.active = active
     self.reactive = reactive
-    self.wound = wound
     self.text = text
     self.description = description
 end
