@@ -7,7 +7,7 @@ local Pile = require("battle.Pile")
 --- Constructor.
 -- @param name Display name of the player.
 -- @param deck Player deck. Table of @{cards.Card} objects
-function Player:initialize(id, name, deck)
+function Player:initialize(id, name, deck, ai)
     self.id = id
     self.name = name
 
@@ -16,6 +16,7 @@ function Player:initialize(id, name, deck)
     self.deck = {}
     self.wounded = {}
     self.alive = true
+    self.ai = ai
 
     for i,v in pairs(deck) do
         table.insert(self.deck, v)
@@ -67,6 +68,10 @@ function Player:hit(count)
         hits = hits+1
     end
     return hits
+end
+
+function Player:isAI()
+    return self.ai ~= nil
 end
 
 return Player

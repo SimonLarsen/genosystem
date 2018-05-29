@@ -11,6 +11,8 @@ local TargetEffect = require("cards.TargetEffect")
 local CardEffect = require("cards.CardEffect")
 
 local SelectTargetEvent = require("events.SelectTargetEvent")
+local PlayCardEvent = require("events.PlayCardEvent")
+
 local MAX_ACTIONS = 3
 local HAND_SIZE = 5
 
@@ -55,15 +57,31 @@ function BattleSystem:update(dt)
             end
 
         elseif battle.state == Battle.static.STATE_PLAY_CARD then
-            if prox.gui.Button("End turn", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
-                battle.current_player = battle.current_player % 2 + 1
-                battle.state = Battle.static.STATE_PREPARE
+            if battle:currentPlayer():isAI() then
+                if battle.actions == 0 then
+                    self:endTurn(battle)
+                else
+                    local decision = battle:currentPlayer().ai:play(battle:currentPlayer(), battle:opponentPlayer())
+                    self:onPlayCard(PlayCardEvent(battle.current_player, decision))
+                end
+            else
+                if prox.gui.Button("End turn", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
+                    self:endTurn(battle)
+                end
             end
 
         elseif battle.state == Battle.static.STATE_REACT then
-            if prox.gui.Button("Don't react", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
-                battle:opponentHand().state = Hand.static.STATE_INACTIVE
-                battle.state = Battle.static.STATE_REACT_DAMAGE
+            if battle:opponentPlayer():isAI() then
+                local decision = battle:opponentPlayer().ai:react(battle:opponentPlayer(), battle:currentPlayer(), battle.damage)
+                if decision then
+                    self:onPlayCard(PlayCardEvent(battle.current_player % 2 + 1, decision))
+                else
+                    self:endReact(battle)
+                end
+            else
+                if prox.gui.Button("Don't react", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
+                    self:endReact(battle)
+                end
             end
             prox.gui.Label("Damage: " .. battle.damage, {font=title_font, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32)
 
@@ -139,11 +157,6 @@ function BattleSystem:onPlayCard(event)
             assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
             local card = player.hand[event.card]
             local hand = battle.hands[event.player]
-
-            if card.block == nil then
-                print("Card cannot block.")
-                return
-            end
 
             battle.damage = math.max(battle.damage - card.block, 0)
 
@@ -354,6 +367,16 @@ function BattleSystem:playerCanBlock(player)
         end
     end
     return false
+end
+
+function BattleSystem:endTurn(battle)
+    battle.current_player = battle.current_player % 2 + 1
+    battle.state = Battle.static.STATE_PREPARE
+end
+
+function BattleSystem:endReact(battle)
+    battle:opponentHand().state = Hand.static.STATE_INACTIVE
+    battle.state = Battle.static.STATE_REACT_DAMAGE
 end
 
 function BattleSystem:makeIndicator(battle, player, type, value)

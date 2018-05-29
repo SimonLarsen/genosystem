@@ -39,7 +39,7 @@ function prox.load()
     prox.engine:addSystem(require("systems.graphics.IndicatorSystem")())
 
     local player = require("components.battle.Player")(1, "Anders", deck)
-    local enemy = require("components.battle.Player")(2, "Preben", deck)
+    local enemy = require("components.battle.Player")(2, "Preben", deck, require("ai.RandomAI")())
 
     local player_hand = Entity()
     player_hand:add(require("components.battle.Hand")(1))
