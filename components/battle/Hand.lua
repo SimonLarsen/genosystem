@@ -8,6 +8,8 @@ Hand.static.STATE_INACTIVE = 1
 Hand.static.STATE_ACTIVE   = 2
 Hand.static.STATE_REACT    = 3
 
+--- Constructor
+-- @param player ID of player hand belongs to {1,2}
 function Hand:initialize(player)
     self.cards = {}
     self.player = player

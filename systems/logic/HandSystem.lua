@@ -74,7 +74,7 @@ function HandSystem:update(dt)
             local card = hand.cards[hover_card]
             local cc = card:get("components.battle.Card").card
             local t = card:get("Transform")
-            prox.gui.Label(cc:getText(), prox.window.getWidth()/2-100, prox.window.getHeight()/2-20, 200, 60)
+            prox.gui.Label(cc:getText(), prox.window.getWidth()/2-120, prox.window.getHeight()/2-20, 240, 60)
             prox.gui.Label(cc.name, {font=title_font}, prox.window.getWidth()/2-60, prox.window.getHeight()/2-40, 120, 20)
 
             if prox.mouse.wasPressed(1) then
