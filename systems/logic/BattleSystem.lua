@@ -36,10 +36,12 @@ function BattleSystem:update(dt)
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
 
-        if prox.engine:getEntityCount("components.battle.Indicator") > 0 then
+        if battle.wait > 0 then
+            battle.wait = battle.wait - dt
 
         elseif #battle.effects > 0 then
             self:resolve(battle)
+            self:wait(battle, 0.8)
 
         elseif battle.state == Battle.static.STATE_INIT then
             for _, player in ipairs(battle.players) do
@@ -382,6 +384,10 @@ function BattleSystem:makeCard(battle, player, card)
     e:add(cc)
     prox.engine:addEntity(e)
     return e
+end
+
+function BattleSystem:wait(battle, time)
+    battle.wait = math.max(battle.wait, time)
 end
 
 return BattleSystem

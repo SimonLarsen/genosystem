@@ -25,6 +25,7 @@ function Battle:initialize(player1, player2, hand1, hand2, card_index)
     self.current_player = 1
     self.actions = 0
     self.damage = 0
+    self.wait = 0
     self.effects = {}
 end
 

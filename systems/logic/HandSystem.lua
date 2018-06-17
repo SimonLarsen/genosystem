@@ -26,7 +26,7 @@ function HandSystem:update(dt)
         local mx, my = prox.mouse.getPosition()
 
         -- find hovered card
-        if hand.state ~= Hand.static.STATE_INACTIVE then
+        if hand.player == 1 and hand.state ~= Hand.static.STATE_INACTIVE then
             for i, card in ipairs(hand.cards) do
                 local t = card:get("Transform")
                 local dx = math.abs(mx - t.x)
