@@ -2,8 +2,7 @@
 -- @classmod cards.Action
 local Action = class("cards.Action")
 
-local TargetEffect = require("cards.TargetEffect")
-local CardEffect = require("cards.CardEffect")
+local Effect = require("battle.Effect")
 
 --- Constructor.
 -- @param target (string) Target of action.
@@ -15,14 +14,12 @@ end
 
 --- Recursively apply card action, adding effects to queue.
 -- @param variables Table of current battle variables.
+-- @param reactive True if effect is applied reactively.
 -- @param effects Effect queue.
 -- @return The effects queue.
-function Action:apply(variables, effects)
-    if self.target == "target" then
-        table.insert(effects, TargetEffect())
-    end
+function Action:apply(variables, reactive, effects)
     for i,v in ipairs(self.effects) do
-        table.insert(effects, CardEffect(self.target, v:clone()))
+        table.insert(effects, Effect(self.target, reactive, v:clone()))
     end
     return effects
 end

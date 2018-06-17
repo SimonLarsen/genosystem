@@ -2,19 +2,18 @@
 -- @classmod components.battle.Battle
 local Battle = class("components.battle.Battle")
 
-Battle.static.STATE_INIT          = 0
-Battle.static.STATE_PREPARE       = 1
-Battle.static.STATE_PLAY_CARD     = 2
-Battle.static.STATE_REACT         = 3
-Battle.static.STATE_RESOLVE       = 4
-Battle.static.STATE_REACT_DAMAGE  = 5
-Battle.static.STATE_REACT_RESOLVE = 6
+Battle.static.STATE_INIT         = 0
+Battle.static.STATE_PREPARE      = 1
+Battle.static.STATE_PLAY         = 2
+Battle.static.STATE_REACT        = 3
+Battle.static.STATE_REACT_DAMAGE = 4
 
 --- Constructor.
--- @param party1 Table of player entities for first party.
--- @param party2 Table of player entities for second party.
--- @param card_index Table of all @{cards.Card} definitions.
--- @param hand Entity of current battle.
+-- @param player1 First @{components.battle.Player} instance.
+-- @param player2 Second @{components.battle.Player} instance.
+-- @param hand1 @{components.battle.Hand} instance for first player.
+-- @param hand2 @{components.battle.Hand} instance for second player.
+-- @param card_index Table of all cards.
 function Battle:initialize(player1, player2, hand1, hand2, card_index)
     self.players = {player1, player2}
     self.hands = {hand1, hand2}
@@ -27,7 +26,6 @@ function Battle:initialize(player1, player2, hand1, hand2, card_index)
     self.actions = 0
     self.damage = 0
     self.effects = {}
-    self.react_effects = {}
 end
 
 function Battle:currentPlayer()

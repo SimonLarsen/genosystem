@@ -7,8 +7,8 @@ local Card = require("components.battle.Card")
 local Hand = require("components.battle.Hand")
 local Indicator = require("components.battle.Indicator")
 
-local TargetEffect = require("cards.TargetEffect")
-local CardEffect = require("cards.CardEffect")
+local Effect = require("battle.Effect")
+local DrawEffect = require("cards.effects.draw")
 
 local SelectTargetEvent = require("events.SelectTargetEvent")
 local PlayCardEvent = require("events.PlayCardEvent")
@@ -20,7 +20,6 @@ function BattleSystem:initialize()
     System.initialize(self)
 
     prox.events:addListener("events.PlayCardEvent", self, self.onPlayCard)
-    prox.events:addListener("events.SelectTargetEvent", self, self.onSelectTarget)
 end
 
 function BattleSystem:requires()
@@ -37,15 +36,20 @@ function BattleSystem:update(dt)
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
 
-        if battle.state == Battle.static.STATE_INIT then
+        if prox.engine:getEntityCount("components.battle.Indicator") > 0 then
+
+        elseif #battle.effects > 0 then
+            self:resolve(battle)
+
+        elseif battle.state == Battle.static.STATE_INIT then
             for _, player in ipairs(battle.players) do
                 self:effectDrawCards(battle, player, HAND_SIZE)
             end
             battle.state = Battle.static.STATE_PREPARE
 
         elseif battle.state == Battle.static.STATE_PREPARE then
-            self:effectDrawCards(battle, battle:currentPlayer(), HAND_SIZE-#battle:currentPlayer().hand)
-            battle.state = Battle.static.STATE_PLAY_CARD
+            table.insert(battle.effects, Effect("self", false, DrawEffect(HAND_SIZE-#battle:currentPlayer().hand)))
+            battle.state = Battle.static.STATE_PLAY
             battle.actions = MAX_ACTIONS
 
             for i, hand in ipairs(battle.hands) do
@@ -56,7 +60,7 @@ function BattleSystem:update(dt)
                 end
             end
 
-        elseif battle.state == Battle.static.STATE_PLAY_CARD then
+        elseif battle.state == Battle.static.STATE_PLAY then
             if battle:currentPlayer():isAI() then
                 if battle.actions == 0 then
                     self:endTurn(battle)
@@ -87,25 +91,7 @@ function BattleSystem:update(dt)
 
         elseif battle.state == Battle.static.STATE_REACT_DAMAGE then
             self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
-            battle.state = Battle.static.STATE_RESOLVE
-
-        elseif battle.state == Battle.static.STATE_RESOLVE then
-            if prox.engine:getEntityCount("components.battle.Indicator") == 0 then
-                if #battle.effects > 0 then
-                    self:resolve(battle)
-                else
-                    battle.state = Battle.static.STATE_PLAY_CARD
-                end
-            end
-
-        elseif battle.state == Battle.static.STATE_REACT_RESOLVE then
-            if prox.engine:getEntityCount("components.battle.Indicator") == 0 then
-                if #battle.react_effects > 0 then
-                    self:resolve(battle)
-                else
-                    battle.state = Battle.static.STATE_REACT_DAMAGE
-                end
-            end
+            battle.state = Battle.static.STATE_PLAY
         end
 
         if battle.current_player == 1 then
@@ -130,7 +116,7 @@ end
 function BattleSystem:onPlayCard(event)
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
-        if battle.state == Battle.static.STATE_PLAY_CARD
+        if battle.state == Battle.static.STATE_PLAY
         and battle.actions > 0
         and event.player == battle.current_player then
             local player = battle.players[event.player]
@@ -148,7 +134,6 @@ function BattleSystem:onPlayCard(event)
             prox.engine:removeEntity(hand.cards[event.card])
             table.remove(hand.cards, event.card)
 
-            battle.state = Battle.static.STATE_RESOLVE
             battle.actions = battle.actions - 1
 
         elseif battle.state == Battle.static.STATE_REACT
@@ -162,7 +147,7 @@ function BattleSystem:onPlayCard(event)
 
             local variables = {}
             self:reactCard(battle, card, {})
-            
+
             table.remove(player.hand, event.card)
             if not card:isToken() then
                 table.insert(player.discard, 1, card)
@@ -170,17 +155,9 @@ function BattleSystem:onPlayCard(event)
             prox.engine:removeEntity(hand.cards[event.card])
             table.remove(hand.cards, event.card)
 
-            battle.state = Battle.static.STATE_REACT_RESOLVE
             hand.state = Hand.static.STATE_INACTIVE
+            battle.state = Battle.static.STATE_REACT_DAMAGE
         end
-    end
-end
-
-function BattleSystem:onSelectTarget(event)
-    for _, e in pairs(self.targets) do
-        local battle = e:get("components.battle.Battle")
-        battle.target = battle.party[event.party][event.player]
-        battle.state = Battle.static.STATE_RESOLVE
     end
 end
 
@@ -190,9 +167,9 @@ end
 -- @param effects (Output) Table to return effects.
 -- @return Table of effects
 function BattleSystem:playCard(battle, card, variables)
-    battle.effects = {}
+    assert(#battle.effects == 0, "Card active effect played while effects queue is not empty.")
     for _, v in ipairs(card.active) do
-        v:apply(variables, battle.effects)
+        v:apply(variables, false, battle.effects)
     end
 end
 
@@ -202,9 +179,12 @@ end
 -- @param effects (Output) Table to return effects.
 -- @return Table of effects
 function BattleSystem:reactCard(battle, card, variables)
-    battle.react_effects = {}
+    local top_effects = {}
     for _, v in ipairs(card.reactive) do
-        v:apply(variables, battle.react_effects)
+        v:apply(variables, true, top_effects)
+    end
+    for i=#top_effects, 1, -1 do
+        table.insert(battle.effects, 1, top_effects[i])
     end
 end
 
@@ -212,14 +192,14 @@ end
 -- @param battle Current @{components.battle.Battle} instance.
 -- @param target Target string.
 -- @return A @{components.battle.Player} instance.
-function BattleSystem:getTarget(battle, target)
-    if battle.state == Battle.static.STATE_RESOLVE then
+function BattleSystem:getTarget(battle, target, reactive)
+    if not reactive then
         if target == "self" then
             return battle:currentPlayer()
         elseif target == "enemy" then
             return battle:opponentPlayer()
         end
-    elseif battle.state == Battle.static.STATE_REACT_RESOLVE then
+    else
         if target == "self" then
             return battle:opponentPlayer()
         elseif target == "enemy" then
@@ -230,19 +210,10 @@ function BattleSystem:getTarget(battle, target)
 end
 
 function BattleSystem:resolve(battle)
-    local e
-    if battle.state == Battle.static.STATE_RESOLVE then
-        e = battle.effects[1]
-        table.remove(battle.effects, 1)
-    elseif battle.state == Battle.static.STATE_REACT_RESOLVE then
-        e = battle.react_effects[1]
-        table.remove(battle.react_effects, 1)
-    else
-        error("Can only resolve in STATE_RESOLVE or STATE_REACT_RESOLVE state.")
-    end
-    assert(e:isInstanceOf(CardEffect), "Card effect is not of class CardEffect")
+    local e = battle.effects[1]
+    table.remove(battle.effects, 1)
 
-    local target = self:getTarget(battle, e.target)
+    local target = self:getTarget(battle, e.target, e.reactive)
     local effect = e.effect
 
     local type = effect.type
@@ -253,8 +224,7 @@ function BattleSystem:resolve(battle)
     elseif type == "discard" then
         self:effectDiscardCards(battle, target, effect.count)
     elseif type == "hit" then
-        if battle.state == Battle.static.STATE_RESOLVE
-        and e.target == "enemy" and self:playerCanBlock(target) then
+        if not e.reactive and e.target == "enemy" and self:playerCanBlock(target) then
             battle.damage = effect.count
             battle:opponentHand().state = Hand.static.STATE_REACT
             battle.state = Battle.static.STATE_REACT
@@ -376,7 +346,7 @@ end
 
 function BattleSystem:endReact(battle)
     battle:opponentHand().state = Hand.static.STATE_INACTIVE
-    battle.state = Battle.static.STATE_REACT_DAMAGE
+    Battle.state = Battle.static.STATE_REACT_DAMAGE
 end
 
 function BattleSystem:makeIndicator(battle, player, type, value)

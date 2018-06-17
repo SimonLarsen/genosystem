@@ -5,8 +5,10 @@ local Player = class("components.battle.Player")
 local Pile = require("battle.Pile")
 
 --- Constructor.
+-- @param id Index of player {1,2}.
 -- @param name Display name of the player.
 -- @param deck Player deck. Table of @{cards.Card} objects
+-- @param ai AI components if player is non-player controlled.
 function Player:initialize(id, name, deck, ai)
     self.id = id
     self.name = name
