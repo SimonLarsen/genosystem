@@ -55,7 +55,7 @@ function HandSystem:update(dt)
             card:get("Transform").z = i
 
             local col = card:get("Sprite").color
-            if hand.state == Hand.static.STATE_REACT and not c.card.block then
+            if hand.player == 1 and hand.state == Hand.static.STATE_REACT and not c.card.block then
                 col[1], col[2], col[3] = 0.4, 0.4, 0.4
                 c.target.y = c.target.y + 10
                 card:get("Transform").z = i + 10
