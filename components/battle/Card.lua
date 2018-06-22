@@ -3,12 +3,12 @@
 
 local Card = class("components.battle.Card")
 
-function Card:initialize(card)
+function Card:initialize(card, dir, zoom, active)
     self.card = card
-    self.target = prox.Transform(0, 0)
-    self.dir = 0
-    self.target_dir = 0
-    self.active = true
+    self.dir = dir or 0
+    self.zoom = zoom or 1
+    self.active = active ~= false
+    self.alive = 1
 end
 
 return Card

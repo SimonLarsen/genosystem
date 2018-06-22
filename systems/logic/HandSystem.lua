@@ -50,14 +50,14 @@ function HandSystem:update(dt)
             end
             local hand_width = math.max(math.min((ncards-1) * 74, MAX_WIDTH), 10)
 
-            c.target.x = handpos.x + offset*hand_width/2
-            c.target.y = handpos.y
-            card:get("Transform").z = i
+            local target_x = handpos.x + offset*hand_width/2
+            local target_y = handpos.y
+            local target_z = i
 
             local col = card:get("Sprite").color
             if hand.player == 1 and hand.state == Hand.static.STATE_REACT and not c.card.block then
                 col[1], col[2], col[3] = 0.4, 0.4, 0.4
-                c.target.y = c.target.y + 10
+                target_y = target_y + 10
                 card:get("Transform").z = i + 10
             else
                 col[1], col[2], col[3] = 1, 1, 1
@@ -65,9 +65,14 @@ function HandSystem:update(dt)
 
             -- move hovered card up
             if i == hover_card then
-                c.target.y = c.target.y - 10
-                card:get("Transform").z = 0
+                target_y = target_y - 10
+                target_z = 0
             end
+
+            local t = card:get("Transform")
+            local speed = math.min(10*math.sqrt((t.x-target_x)^2 + (t.y-target_y)^2), 700)
+            t.x, t.y = prox.math.movetowards2(t.x, t.y, target_x, target_y, speed*dt)
+            t.z = target_z
         end
 
         if hover_card then
