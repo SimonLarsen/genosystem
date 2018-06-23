@@ -15,10 +15,6 @@ function CardSystem:update(dt)
             e:get("Sprite").sx = math.abs(math.cos(card.dir * math.pi)) * card.zoom
             e:get("Sprite").sy = card.zoom
         end
-
-        if card.alive <= 0 then
-            prox.engine:removeEntity(e)
-        end
     end
 end
 

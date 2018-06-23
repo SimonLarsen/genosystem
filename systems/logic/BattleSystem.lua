@@ -138,12 +138,11 @@ function BattleSystem:onPlayCard(event)
             table.remove(hand.cards, event.card)
 
             e:get("Transform").z = 0
-            e:get("Tween"):add(0.6, e:get("Transform"), {x=prox.window.getWidth()/2, y=prox.window.getHeight()/2}, "inOutQuad")
-            e:get("Tween"):add(0.6, e:get("components.battle.Card"), {zoom=1.3}, "outQuad")
-            e:get("Tween"):add(0.2, e:get("components.battle.Card"), {zoom=1.0}, "outQuad", 0.6)
-            e:get("Tween"):add(0.4, e:get("components.battle.Card"), {dir=2}, "outQuad", 0.4)
-            e:get("Tween"):add(0.8, e:get("components.battle.Card"), {alive=0}, "outQuad")
-            self:wait(battle, 1.0)
+            e:get("Tween"):add(0.5, e:get("Transform"), {x=prox.window.getWidth()/2, y=prox.window.getHeight()/2}, "inOutQuad")
+            e:get("Tween"):add(0.5, e:get("components.battle.Card"), {zoom=1.3}, "outQuad")
+            e:get("Tween"):add(0.2, e:get("components.battle.Card"), {zoom=1.0}, "outQuad", 0.5)
+            e:get("Tween"):add(0.4, e:get("components.battle.Card"), {dir=2}, "outQuad", 0.2)
+            e:add(prox.RemoveAfterTime(0.8))
 
             local e_flash = Entity()
             e_flash:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2, -1))
@@ -151,8 +150,10 @@ function BattleSystem:onPlayCard(event)
             e_flash:add(prox.Sprite({image="data/images/card_flash.png", color={1,1,1,0}}))
             e_flash:get("Tween"):add(0.05, e_flash:get("Sprite"), {color={1,1,1,1}}, "inQuad", 0.75)
             e_flash:get("Tween"):add(0.30, e_flash:get("Sprite"), {color={1,1,1,0}, sx=1.4, sy=1.4}, "outQuad", 0.80)
+            e_flash:add(prox.RemoveAfterTime(1.1))
             prox.engine:addEntity(e_flash)
 
+            self:wait(battle, 1.0)
             battle.actions = battle.actions - 1
 
         elseif battle.state == Battle.static.STATE_REACT

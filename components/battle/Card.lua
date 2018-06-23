@@ -8,7 +8,6 @@ function Card:initialize(card, dir, zoom, active)
     self.dir = dir or 0
     self.zoom = zoom or 1
     self.active = active ~= false
-    self.alive = 1
 end
 
 return Card
