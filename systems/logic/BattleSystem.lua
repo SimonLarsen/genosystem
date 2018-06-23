@@ -27,11 +27,16 @@ function BattleSystem:requires()
 end
 
 function BattleSystem:update(dt)
-    local text_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
-    local title_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 13)
-    local huge_font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 32)
+    local font_text = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
+    local font_title = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 13)
+    local font_huge = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 32)
 
-    prox.resources.setFont(text_font)
+    local img_portrait = prox.resources.getImage("data/images/portrait.png")
+    local img_icon_deck = prox.resources.getImage("data/images/icons/deck.png")
+    local img_icon_discard = prox.resources.getImage("data/images/icons/discard.png")
+    local img_icon_wounded = prox.resources.getImage("data/images/icons/wounded.png")
+
+    prox.resources.setFont(font_text)
 
     for _, e in pairs(self.targets) do
         local battle = e:get("components.battle.Battle")
@@ -71,7 +76,7 @@ function BattleSystem:update(dt)
                     self:onPlayCard(PlayCardEvent(battle.current_player, decision))
                 end
             else
-                if prox.gui.Button("End turn", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
+                if prox.gui.Button("End turn", {font=font_title}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
                     self:endTurn(battle)
                 end
             end
@@ -85,33 +90,40 @@ function BattleSystem:update(dt)
                     self:endReact(battle)
                 end
             else
-                if prox.gui.Button("Don't react", {font=title_font}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
+                if prox.gui.Button("Don't react", {font=font_title}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
                     self:endReact(battle)
                 end
             end
-            prox.gui.Label("Damage: " .. battle.damage, {font=title_font, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32)
+            prox.gui.Label("Damage: " .. battle.damage, {font=font_title, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32)
 
         elseif battle.state == Battle.static.STATE_REACT_DAMAGE then
             self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
             battle.state = Battle.static.STATE_PLAY
         end
 
-        if battle.current_player == 1 then
-            prox.gui.Label("→", {font=huge_font}, 100, prox.window.getHeight()-71, 64, 32)
-        else
-            prox.gui.Label("→", {font=huge_font}, 100, 39, 64, 32)
-        end
+        prox.gui.Label(prox.string.trim(string.rep("Ø\n", battle.actions)), {font=font_title, align="center"}, prox.window.getWidth()-124, prox.window.getHeight()/2-50, 16, 100)
 
-        prox.gui.Label("Actions: " .. battle.actions, {font=title_font, align="left"}, 16, prox.window.getHeight()/2-32, 200, 64)
+        -- portraits
+        prox.gui.Image(img_portrait, prox.window.getWidth()-92, prox.window.getHeight()-92)
+        prox.gui.Image(img_portrait, 18, 18)
 
-        prox.gui.Label(
-            string.format("Deck: %d\nDiscard: %d\nWounded: %d", #battle.players[1].deck, #battle.players[1].discard, #battle.players[1].wounded),
-            {font=title_font, align="right"}, prox.window.getWidth()-105, prox.window.getHeight()-65, 100, 60
-        )
-        prox.gui.Label(
-            string.format("Deck: %d\nDiscard: %d\nWounded: %d", #battle.players[2].deck, #battle.players[2].discard, #battle.players[2].wounded),
-            {font=title_font, align="right"}, prox.window.getWidth()-105, 5, 100, 60
-        )
+        -- pile size icons
+        prox.gui.Image(img_icon_deck, prox.window.getWidth()-150, prox.window.getHeight()-92)
+        prox.gui.Image(img_icon_discard, prox.window.getWidth()-150, prox.window.getHeight()-64)
+        prox.gui.Image(img_icon_wounded, prox.window.getWidth()-153, prox.window.getHeight()-37)
+
+        prox.gui.Image(img_icon_deck, 114, 16)
+        prox.gui.Image(img_icon_discard, 114, 45)
+        prox.gui.Image(img_icon_wounded, 111, 72)
+
+        -- pile size numbers
+        prox.gui.Label(tostring(#battle.players[1].deck),    {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-91, 100, 16)
+        prox.gui.Label(tostring(#battle.players[1].discard), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-63, 100, 16)
+        prox.gui.Label(tostring(#battle.players[1].wounded), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-35, 100, 16)
+
+        prox.gui.Label(tostring(#battle.players[2].deck),    {font=font_title, align="left"}, 135, 18, 100, 16)
+        prox.gui.Label(tostring(#battle.players[2].discard), {font=font_title, align="left"}, 135, 46, 100, 16)
+        prox.gui.Label(tostring(#battle.players[2].wounded), {font=font_title, align="left"}, 135, 74, 100, 16)
     end
 end
 
@@ -276,7 +288,7 @@ function BattleSystem:effectDrawCards(battle, player, count)
         table.insert(player.hand, card)
     end
 
-    self:makeIndicator(battle, player, Indicator.static.TYPE_DRAW, count)
+    --self:makeIndicator(battle, player, Indicator.static.TYPE_DRAW, count)
 end
 
 function BattleSystem:effectDiscardCards(battle, player, count)
@@ -374,9 +386,13 @@ function BattleSystem:makeIndicator(battle, player, type, value)
     e:add(prox.Tween())
 
     local x, y
-    x = prox.window.getWidth()-32
-    if player.id == 1 then y = prox.window.getHeight()-32 else y = 32 end
+    if player.id == 1 then
+        x, y = prox.window.getWidth()-55, prox.window.getHeight()-55
+    else
+        x, y = 55, 55
+    end
     local targetx, targety = x, y-5
+
     e:add(prox.Transform(x, y))
     e:add(Indicator(type, 1.0, value))
     e:get("Tween"):add(0.5, e:get("Transform"), {x=targetx, y=targety}, "outQuad")
