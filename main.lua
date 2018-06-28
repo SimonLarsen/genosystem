@@ -60,4 +60,9 @@ function prox.load()
     prox.engine:addEntity(battle)
     prox.engine:addEntity(player_hand)
     prox.engine:addEntity(enemy_hand)
+
+    local cam = Entity()
+    cam:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2))
+    cam:add(prox.Camera(true))
+    prox.engine:addEntity(cam)
 end
