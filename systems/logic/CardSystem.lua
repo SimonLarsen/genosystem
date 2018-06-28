@@ -11,7 +11,7 @@ function CardSystem:update(dt)
         local card = e:get("components.battle.Card")
 
         e:get("Animator"):setProperty("dir", card.dir)
-        if e:get("Sprite") then
+        if e:has("Sprite") then
             e:get("Sprite").sx = math.abs(math.cos(card.dir * math.pi)) * card.zoom
             e:get("Sprite").sy = card.zoom
         end
