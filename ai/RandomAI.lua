@@ -1,3 +1,5 @@
+--- Random AI implementation
+-- @classmod ai.RandomAI
 local RandomAI = class("ai.RandomAI")
 
 function RandomAI:initialize()

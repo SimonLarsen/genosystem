@@ -1,6 +1,6 @@
 --- System handling in-battle effect indicators.
--- @classmod systems.graphics.IndicatorSystem
-local IndicatorSystem = class("systems.graphics.IndicatorSystem", System)
+-- @classmod systems.battle.IndicatorSystem
+local IndicatorSystem = class("systems.battle.IndicatorSystem", System)
 
 local Indicator = require("components.battle.Indicator")
 

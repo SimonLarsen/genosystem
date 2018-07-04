@@ -1,7 +1,7 @@
 project = "geno:system"
 title = "geno:system documentation"
 description = "A deck building RPG"
-file = {"battle","cards","components","systems"}
+file = {"ai", "battle", "cards", "components", "core", "events", "systems"}
 format = "markdown"
 dir = "doc"
 readme = "README.md"

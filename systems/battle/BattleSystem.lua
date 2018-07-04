@@ -1,6 +1,6 @@
 --- In-battle controller system.
--- @classmod systems.logic.BattleSystem
-local BattleSystem = class("systems.logic.BattleSystem", System)
+-- @classmod systems.battle.BattleSystem
+local BattleSystem = class("systems.battle.BattleSystem", System)
 
 local Battle = require("components.battle.Battle")
 local Card = require("components.battle.Card")
@@ -38,166 +38,163 @@ function BattleSystem:update(dt)
 
     prox.resources.setFont(font_text)
 
-    for _, e in pairs(self.targets) do
-        local battle = e:get("components.battle.Battle")
+    local _, e = next(self.targets)
+    local battle = e:get("components.battle.Battle")
 
-        if battle.wait > 0 then
-            battle.wait = battle.wait - dt
+    if battle.wait > 0 then
+        battle.wait = battle.wait - dt
 
-        elseif #battle.effects > 0 then
-            self:resolve(battle)
-            self:wait(battle, 0.8)
+    elseif #battle.effects > 0 then
+        self:resolve(battle)
+        self:wait(battle, 0.8)
 
-        elseif battle.state == Battle.static.STATE_INIT then
-            for _, player in ipairs(battle.players) do
-                self:effectDrawCards(battle, player, HAND_SIZE)
-            end
-            battle.state = Battle.static.STATE_PREPARE
+    elseif battle.state == Battle.static.STATE_INIT then
+        for _, player in ipairs(battle.players) do
+            self:effectDrawCards(battle, player, HAND_SIZE)
+        end
+        battle.state = Battle.static.STATE_PREPARE
 
-        elseif battle.state == Battle.static.STATE_PREPARE then
-            table.insert(battle.effects, Effect("self", false, DrawEffect(HAND_SIZE-#battle:currentPlayer().hand)))
-            battle.state = Battle.static.STATE_PLAY
-            battle.actions = MAX_ACTIONS
+    elseif battle.state == Battle.static.STATE_PREPARE then
+        table.insert(battle.effects, Effect("self", false, DrawEffect(HAND_SIZE-#battle:currentPlayer().hand)))
+        battle.state = Battle.static.STATE_PLAY
+        battle.actions = MAX_ACTIONS
 
-            for i, hand in ipairs(battle.hands) do
-                if i == battle.current_player then
-                    hand.state = Hand.static.STATE_ACTIVE
-                else
-                    hand.state = Hand.static.STATE_INACTIVE
-                end
-            end
-
-        elseif battle.state == Battle.static.STATE_PLAY then
-            if battle:currentPlayer():isAI() then
-                if battle.actions == 0 then
-                    self:endTurn(battle)
-                else
-                    local decision = battle:currentPlayer().ai:play(battle:currentPlayer(), battle:opponentPlayer())
-                    self:onPlayCard(PlayCardEvent(battle.current_player, decision))
-                end
+        for i, hand in ipairs(battle.hands) do
+            if i == battle.current_player then
+                hand.state = Hand.static.STATE_ACTIVE
             else
-                if prox.gui.Button("End turn", {font=font_title}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
-                    self:endTurn(battle)
-                end
+                hand.state = Hand.static.STATE_INACTIVE
             end
-
-        elseif battle.state == Battle.static.STATE_REACT then
-            if battle:opponentPlayer():isAI() then
-                local decision = battle:opponentPlayer().ai:react(battle:opponentPlayer(), battle:currentPlayer(), battle.damage)
-                if decision then
-                    self:onPlayCard(PlayCardEvent(battle.current_player % 2 + 1, decision))
-                else
-                    self:endReact(battle)
-                end
-            else
-                if prox.gui.Button("Don't react", {font=font_title}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
-                    self:endReact(battle)
-                end
-            end
-            prox.gui.Label("Damage: " .. battle.damage, {font=font_title, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32)
-
-        elseif battle.state == Battle.static.STATE_REACT_DAMAGE then
-            self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
-            battle.state = Battle.static.STATE_PLAY
         end
 
-        prox.gui.Label(prox.string.trim(string.rep("Ø\n", battle.actions)), {font=font_title, align="center"}, prox.window.getWidth()-124, prox.window.getHeight()/2-50, 16, 100)
+    elseif battle.state == Battle.static.STATE_PLAY then
+        if battle:currentPlayer():isAI() then
+            if battle.actions == 0 then
+                self:endTurn(battle)
+            else
+                local decision = battle:currentPlayer().ai:play(battle:currentPlayer(), battle:opponentPlayer())
+                self:onPlayCard(PlayCardEvent(battle.current_player, decision))
+            end
+        else
+            if prox.gui.Button("End turn", {font=font_title}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
+                self:endTurn(battle)
+            end
+        end
 
-        -- portraits
-        prox.gui.Image(img_portrait, prox.window.getWidth()-92, prox.window.getHeight()-92)
-        prox.gui.Image(img_portrait, 18, 18)
+    elseif battle.state == Battle.static.STATE_REACT then
+        if battle:opponentPlayer():isAI() then
+            local decision = battle:opponentPlayer().ai:react(battle:opponentPlayer(), battle:currentPlayer(), battle.damage)
+            if decision then
+                self:onPlayCard(PlayCardEvent(battle.current_player % 2 + 1, decision))
+            else
+                self:endReact(battle)
+            end
+        else
+            if prox.gui.Button("Don't react", {font=font_title}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
+                self:endReact(battle)
+            end
+        end
+        prox.gui.Label("Damage: " .. battle.damage, {font=font_title, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32)
 
-        -- pile size icons
-        prox.gui.Image(img_icon_deck, prox.window.getWidth()-150, prox.window.getHeight()-92)
-        prox.gui.Image(img_icon_discard, prox.window.getWidth()-150, prox.window.getHeight()-64)
-        prox.gui.Image(img_icon_wounded, prox.window.getWidth()-153, prox.window.getHeight()-37)
-
-        prox.gui.Image(img_icon_deck, 114, 16)
-        prox.gui.Image(img_icon_discard, 114, 45)
-        prox.gui.Image(img_icon_wounded, 111, 72)
-
-        -- pile size numbers
-        prox.gui.Label(tostring(#battle.players[1].deck),    {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-91, 100, 16)
-        prox.gui.Label(tostring(#battle.players[1].discard), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-63, 100, 16)
-        prox.gui.Label(tostring(#battle.players[1].wounded), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-35, 100, 16)
-
-        prox.gui.Label(tostring(#battle.players[2].deck),    {font=font_title, align="left"}, 135, 18, 100, 16)
-        prox.gui.Label(tostring(#battle.players[2].discard), {font=font_title, align="left"}, 135, 46, 100, 16)
-        prox.gui.Label(tostring(#battle.players[2].wounded), {font=font_title, align="left"}, 135, 74, 100, 16)
+    elseif battle.state == Battle.static.STATE_REACT_DAMAGE then
+        self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
+        battle.state = Battle.static.STATE_PLAY
     end
+
+    prox.gui.Label(prox.string.trim(string.rep("Ø\n", battle.actions)), {font=font_title, align="center"}, prox.window.getWidth()-124, prox.window.getHeight()/2-50, 16, 100)
+
+    -- portraits
+    prox.gui.Image(img_portrait, prox.window.getWidth()-92, prox.window.getHeight()-92)
+    prox.gui.Image(img_portrait, 18, 18)
+
+    -- pile size icons
+    prox.gui.Image(img_icon_deck, prox.window.getWidth()-150, prox.window.getHeight()-92)
+    prox.gui.Image(img_icon_discard, prox.window.getWidth()-150, prox.window.getHeight()-64)
+    prox.gui.Image(img_icon_wounded, prox.window.getWidth()-153, prox.window.getHeight()-37)
+
+    prox.gui.Image(img_icon_deck, 114, 16)
+    prox.gui.Image(img_icon_discard, 114, 45)
+    prox.gui.Image(img_icon_wounded, 111, 72)
+
+    -- pile size numbers
+    prox.gui.Label(tostring(#battle.players[1].deck),    {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-91, 100, 16)
+    prox.gui.Label(tostring(#battle.players[1].discard), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-63, 100, 16)
+    prox.gui.Label(tostring(#battle.players[1].wounded), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-35, 100, 16)
+
+    prox.gui.Label(tostring(#battle.players[2].deck),    {font=font_title, align="left"}, 135, 18, 100, 16)
+    prox.gui.Label(tostring(#battle.players[2].discard), {font=font_title, align="left"}, 135, 46, 100, 16)
+    prox.gui.Label(tostring(#battle.players[2].wounded), {font=font_title, align="left"}, 135, 74, 100, 16)
 end
 
 function BattleSystem:onPlayCard(event)
-    for _, e in pairs(self.targets) do
-        local battle = e:get("components.battle.Battle")
-        if battle.state == Battle.static.STATE_PLAY
-        and battle.actions > 0
-        and event.player == battle.current_player then
-            local player = battle.players[event.player]
-            assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
-            local card = player.hand[event.card]
-            local hand = battle.hands[event.player]
+    local _, e = next(self.targets)
+    local battle = e:get("components.battle.Battle")
+    if battle.state == Battle.static.STATE_PLAY
+    and battle.actions > 0
+    and event.player == battle.current_player then
+        local player = battle.players[event.player]
+        assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
+        local card = player.hand[event.card]
+        local hand = battle.hands[event.player]
 
-            local variables = {}
-            self:playCard(battle, card, {})
+        local variables = {}
+        self:playCard(battle, card, {})
 
-            table.remove(player.hand, event.card)
-            if not card:isToken() then
-                table.insert(player.discard, 1, card)
-            end
-
-            local e = hand.cards[event.card]
-            table.remove(hand.cards, event.card)
-
-            e:get("Transform").z = 0
-            e:get("Tween"):add(0.5, e:get("Transform"), {x=prox.window.getWidth()/2, y=prox.window.getHeight()/2}, "inOutQuad")
-            e:get("Tween"):add(0.5, e:get("components.battle.Card"), {zoom=1.3}, "outQuad")
-            e:get("Tween"):add(0.2, e:get("components.battle.Card"), {zoom=1.0}, "outQuad", 0.5)
-            e:get("Tween"):add(0.4, e:get("components.battle.Card"), {dir=2}, "outQuad", 0.2)
-            e:add(prox.RemoveAfterTime(0.8))
-
-            local e_flash = Entity()
-            e_flash:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2, -1))
-            e_flash:add(prox.Tween())
-            e_flash:add(prox.Sprite({image="data/images/card_flash.png", color={1,1,1,0}}))
-            e_flash:get("Tween"):add(0.05, e_flash:get("Sprite"), {color={1,1,1,1}}, "inQuad", 0.75)
-            e_flash:get("Tween"):add(0.30, e_flash:get("Sprite"), {color={1,1,1,0}, sx=1.4, sy=1.4}, "outQuad", 0.80)
-            e_flash:add(prox.RemoveAfterTime(1.1))
-            prox.engine:addEntity(e_flash)
-
-            self:wait(battle, 1.0)
-            battle.actions = battle.actions - 1
-
-        elseif battle.state == Battle.static.STATE_REACT
-        and event.player ~= battle.current_player then
-            local player = battle.players[event.player]
-            assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
-            local card = player.hand[event.card]
-            local hand = battle.hands[event.player]
-
-            battle.damage = math.max(battle.damage - card.block, 0)
-
-            local variables = {}
-            self:reactCard(battle, card, {})
-
-            table.remove(player.hand, event.card)
-            if not card:isToken() then
-                table.insert(player.discard, 1, card)
-            end
-            prox.engine:removeEntity(hand.cards[event.card])
-            table.remove(hand.cards, event.card)
-
-            hand.state = Hand.static.STATE_INACTIVE
-            battle.state = Battle.static.STATE_REACT_DAMAGE
+        table.remove(player.hand, event.card)
+        if not card:isToken() then
+            table.insert(player.discard, 1, card)
         end
+
+        local e = hand.cards[event.card]
+        table.remove(hand.cards, event.card)
+
+        e:get("Transform").z = 0
+        e:get("Tween"):add(0.5, e:get("Transform"), {x=prox.window.getWidth()/2, y=prox.window.getHeight()/2}, "inOutQuad")
+        e:get("Tween"):add(0.5, e:get("components.battle.Card"), {zoom=1.3}, "outQuad")
+        e:get("Tween"):add(0.2, e:get("components.battle.Card"), {zoom=1.0}, "outQuad", 0.5)
+        e:get("Tween"):add(0.4, e:get("components.battle.Card"), {dir=2}, "outQuad", 0.2)
+        e:add(prox.RemoveAfterTime(0.8))
+
+        local e_flash = Entity()
+        e_flash:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2, -1))
+        e_flash:add(prox.Tween())
+        e_flash:add(prox.Sprite({image="data/images/card_flash.png", color={1,1,1,0}}))
+        e_flash:get("Tween"):add(0.05, e_flash:get("Sprite"), {color={1,1,1,1}}, "inQuad", 0.75)
+        e_flash:get("Tween"):add(0.30, e_flash:get("Sprite"), {color={1,1,1,0}, sx=1.4, sy=1.4}, "outQuad", 0.80)
+        e_flash:add(prox.RemoveAfterTime(1.1))
+        prox.engine:addEntity(e_flash)
+
+        self:wait(battle, 1.0)
+        battle.actions = battle.actions - 1
+
+    elseif battle.state == Battle.static.STATE_REACT
+    and event.player ~= battle.current_player then
+        local player = battle.players[event.player]
+        assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
+        local card = player.hand[event.card]
+        local hand = battle.hands[event.player]
+
+        battle.damage = math.max(battle.damage - card.block, 0)
+
+        local variables = {}
+        self:reactCard(battle, card, {})
+
+        table.remove(player.hand, event.card)
+        if not card:isToken() then
+            table.insert(player.discard, 1, card)
+        end
+        prox.engine:removeEntity(hand.cards[event.card])
+        table.remove(hand.cards, event.card)
+
+        hand.state = Hand.static.STATE_INACTIVE
+        battle.state = Battle.static.STATE_REACT_DAMAGE
     end
 end
 
 --- Execute card's active effects.
+-- @param battle Current @{components.battle.Battle} instance.
 -- @param card @{cards.Card} instance to play.
 -- @param variables Table of current battle variables.
--- @param effects (Output) Table to return effects.
--- @return Table of effects
 function BattleSystem:playCard(battle, card, variables)
     assert(#battle.effects == 0, "Card active effect played while effects queue is not empty.")
     for _, v in ipairs(card.active) do
@@ -206,10 +203,9 @@ function BattleSystem:playCard(battle, card, variables)
 end
 
 --- Execute card's reactive effects.
+-- @param battle Current @{components.battle.Battle} instance.
 -- @param card @{cards.Card} instance to play.
 -- @param variables Table of current battle variables.
--- @param effects (Output) Table to return effects.
--- @return Table of effects
 function BattleSystem:reactCard(battle, card, variables)
     local top_effects = {}
     for _, v in ipairs(card.reactive) do
@@ -223,6 +219,7 @@ end
 --- Get card effect target matching target string.
 -- @param battle Current @{components.battle.Battle} instance.
 -- @param target Target string.
+-- @param reactive True if card is played reactively.
 -- @return A @{components.battle.Player} instance.
 function BattleSystem:getTarget(battle, target, reactive)
     if not reactive then

@@ -1,7 +1,11 @@
+--- Asset management class.
+-- @classmod core.AssetManager
 local AssetManager = class("core.AssetManager")
 
 local MISSING_CARD_PATH = "data/images/cards/_missing_.png"
 
+--- Retrieve path for card face image.
+-- @param id Unique card ID.
 function AssetManager.getCardImagePath(id)
     local path = "data/images/cards/" .. id .. ".png"
     if not prox.resources.exists(path) then
@@ -10,6 +14,8 @@ function AssetManager.getCardImagePath(id)
     return path
 end
 
+--- Create card animator instance from card id.
+-- @param id Unique card ID.
 function AssetManager.getCardAnimator(id)
     return {
         default = "front",

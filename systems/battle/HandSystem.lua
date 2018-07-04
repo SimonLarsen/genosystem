@@ -1,6 +1,6 @@
 --- In-battle hand management.
--- @classmod systems.logic.HandSystem
-local HandSystem = class("systems.logic.HandSystem", System)
+-- @classmod systems.battle.HandSystem
+local HandSystem = class("systems.battle.HandSystem", System)
 
 local Hand = require("components.battle.Hand")
 local PlayCardEvent = require("events.PlayCardEvent")
