@@ -22,7 +22,7 @@ function IndicatorSystem:requires()
 end
 
 function IndicatorSystem:update(dt)
-    local font = prox.resources.getFont("data/fonts/Lato-Black.ttf", 16)
+    local font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 16)
     local color = {normal={fg={1, 1, 1, 1}}}
 
     for _, e in pairs(self.targets) do
