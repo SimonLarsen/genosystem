@@ -12,6 +12,7 @@ local DrawEffect = require("cards.effects.draw")
 
 local SelectTargetEvent = require("events.SelectTargetEvent")
 local PlayCardEvent = require("events.PlayCardEvent")
+local BattleLogEvent = require("events.BattleLogEvent")
 
 local MAX_ACTIONS = 3
 local HAND_SIZE = 5
@@ -50,7 +51,7 @@ function BattleSystem:update(dt)
 
     elseif battle.state == Battle.static.STATE_INIT then
         for _, player in ipairs(battle.players) do
-            self:effectDrawCards(battle, player, HAND_SIZE)
+            self:effectDrawCards(battle, player, HAND_SIZE, true)
         end
         battle.state = Battle.static.STATE_PREPARE
 
@@ -167,6 +168,8 @@ function BattleSystem:onPlayCard(event)
         self:wait(battle, 1.0)
         battle.actions = battle.actions - 1
 
+        prox.events:fireEvent(BattleLogEvent(string.format("%s played %s.", player.name, card.name)))
+
     elseif battle.state == Battle.static.STATE_REACT
     and event.player ~= battle.current_player then
         local player = battle.players[event.player]
@@ -188,6 +191,8 @@ function BattleSystem:onPlayCard(event)
 
         hand.state = Hand.static.STATE_INACTIVE
         battle.state = Battle.static.STATE_REACT_DAMAGE
+
+        prox.events:fireEvent(BattleLogEvent(string.format("%s reacted with %s.", player.name, card.name)))
     end
 end
 
@@ -265,13 +270,13 @@ function BattleSystem:resolve(battle)
     elseif type == "restore" then
         self:effectRestoreCards(battle, target, effect.count)
     elseif type == "gainaction" then
-        self:effectGainActions(battle, effect.count)
+        self:effectGainActions(battle, target, effect.count)
     else
         error(string.format("Unknown card effect type: \"%s\"", type))
     end
 end
 
-function BattleSystem:effectDrawCards(battle, player, count)
+function BattleSystem:effectDrawCards(battle, player, count, silent)
     if count <= 0 then return end
 
     for i=1, count do
@@ -286,11 +291,15 @@ function BattleSystem:effectDrawCards(battle, player, count)
     end
 
     --self:makeIndicator(battle, player, Indicator.static.TYPE_DRAW, count)
+    if not silent then
+        prox.events:fireEvent(BattleLogEvent(string.format("%s drew %d cards.", player.name, count)))
+    end
 end
 
 function BattleSystem:effectDiscardCards(battle, player, count)
     if count <= 0 then return end
     count = math.min(count, #player.hand)
+
     local hand = battle.hands[player.id]
     for i=1, count do
         local index = love.math.random(#player.hand)
@@ -300,6 +309,7 @@ function BattleSystem:effectDiscardCards(battle, player, count)
     end
 
     self:makeIndicator(battle, player, Indicator.static.TYPE_DISCARD, count)
+    prox.events:fireEvent(BattleLogEvent(string.format("%s discarded %d cards.", player.name, count)))
 end
 
 function BattleSystem:effectDealCards(battle, player, card_id, pile, count)
@@ -320,6 +330,7 @@ function BattleSystem:effectDealCards(battle, player, card_id, pile, count)
     end
 
     self:makeIndicator(battle, player, Indicator.static.TYPE_DEAL, count)
+    prox.events:fireEvent(BattleLogEvent(string.format("%s received %d %s tokens to %s.", player.name, count, card.name, pile)))
 end
 
 function BattleSystem:effectReplaceCards(battle, player, card_id, count)
@@ -335,6 +346,7 @@ function BattleSystem:effectReplaceCards(battle, player, card_id, count)
     end
 
     self:effectDealCards(battle, player, card_id, "hand", count)
+    prox.events:fireEvent(BattleLogEvent(string.format("%s had %d cards replaced with %s tokens.", player.name, count, card.name)))
 end
 
 function BattleSystem:effectRestoreCards(battle, player, count)
@@ -346,17 +358,20 @@ function BattleSystem:effectRestoreCards(battle, player, count)
     end
 
     self:makeIndicator(battle, player, Indicator.static.TYPE_RESTORE, count)
+    prox.events:fireEvent(BattleLogEvent(string.format("%s restored %d wounded cards.", player.name, count)))
 end
 
-function BattleSystem:effectGainActions(battle, count)
+function BattleSystem:effectGainActions(battle, player, count)
     battle.actions = battle.actions + count
     self:makeIndicator(battle, battle:currentPlayer(), Indicator.static.TYPE_GAIN_ACTION, count)
+    prox.events:fireEvent(BattleLogEvent(string.format("%s gained %d actions.", player.name, count)))
 end
 
 function BattleSystem:hitPlayer(battle, player, damage)
     local hand = battle.hands[player.id]
     local hits = player:hit(damage)
     self:makeIndicator(battle, player, Indicator.static.TYPE_DAMAGE, damage)
+    prox.events:fireEvent(BattleLogEvent(string.format("%s took %d damage.", player.name, damage)))
 end
 
 function BattleSystem:playerCanBlock(player)

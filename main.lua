@@ -38,16 +38,27 @@ function prox.load()
     prox.engine:addSystem(require("systems.battle.HandSystem")())
     prox.engine:addSystem(require("systems.battle.IndicatorSystem")())
 
+    local bls = require("systems.battle.BattleLogSystem")()
+    prox.engine:addSystem(bls, "update")
+    prox.engine:addSystem(bls, "draw")
+
     local player = require("components.battle.Player")(1, "Anders", deck)
     local enemy = require("components.battle.Player")(2, "Preben", deck, require("ai.RandomAI")())
+
+    local cam = Entity()
+    cam:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2))
+    cam:add(prox.Camera(true))
+    prox.engine:addEntity(cam)
 
     local player_hand = Entity()
     player_hand:add(require("components.battle.Hand")(1))
     player_hand:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()-55))
+    prox.engine:addEntity(player_hand)
 
     local enemy_hand = Entity()
     enemy_hand:add(require("components.battle.Hand")(2))
     enemy_hand:add(prox.Transform(prox.window.getWidth()/2, 55))
+    prox.engine:addEntity(enemy_hand)
 
     local battle = Entity()
     battle:add(require("components.battle.Battle")(
@@ -56,13 +67,9 @@ function prox.load()
         enemy_hand:get("components.battle.Hand"),
         card_index
     ))
-
     prox.engine:addEntity(battle)
-    prox.engine:addEntity(player_hand)
-    prox.engine:addEntity(enemy_hand)
 
-    local cam = Entity()
-    cam:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2))
-    cam:add(prox.Camera(true))
-    prox.engine:addEntity(cam)
+    local battle_log = Entity()
+    battle_log:add(require("components.battle.BattleLog")(card_index))
+    prox.engine:addEntity(battle_log)
 end
