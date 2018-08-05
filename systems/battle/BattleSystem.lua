@@ -131,8 +131,8 @@ function BattleSystem:onPlayCard(event)
     local _, e = next(self.targets)
     local battle = e:get("components.battle.Battle")
     if battle.state == Battle.static.STATE_PLAY
-    and battle.actions > 0
-    and event.player == battle.current_player then
+    and event.player == battle.current_player
+    and battle.actions > 0 and #battle.effects == 0 then
         local player = battle.players[event.player]
         assert(event.card >= 1 and event.card <= #player.hand, "Invalid hand card index.")
         local card = player.hand[event.card]
