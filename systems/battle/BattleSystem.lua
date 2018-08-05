@@ -168,7 +168,7 @@ function BattleSystem:onPlayCard(event)
         self:wait(battle, 1.0)
         battle.actions = battle.actions - 1
 
-        prox.events:fireEvent(BattleLogEvent(string.format("%s played %s.", player.name, card.name)))
+        prox.events:fireEvent(BattleLogEvent({{1,1,1}, player.name.." played ", {0.95, 0.6, 0.6}, card.name, {1,1,1}, "."}))
 
     elseif battle.state == Battle.static.STATE_REACT
     and event.player ~= battle.current_player then

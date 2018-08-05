@@ -21,6 +21,10 @@ function BattleLogSystem:update(dt)
         local inner_height = log.text_height + 2 * log.margin
         local bar_height = math.min(log.h / inner_height, 1) * log.h
 
+        if log.locked then
+            log.scroll = inner_height - log.h
+        end
+
         if prox.mouse.isDown(1) then
             local mx, my = prox.mouse.getPosition()
             if math.abs(log.x+log.w+6 - mx) <= 4 and my >= log.y and my <= log.y+log.h then

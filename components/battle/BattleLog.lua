@@ -11,7 +11,7 @@ function BattleLog:initialize(card_index, x, y, w, h)
     self.h = h or 120
     self.margin = 5
     self.spacing = 4
-    self.scroll = math.huge
+    self.scroll = 0
     self.text_height = 0
     self.locked = true
     self.font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
