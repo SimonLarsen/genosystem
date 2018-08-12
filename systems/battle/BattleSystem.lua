@@ -413,9 +413,9 @@ function BattleSystem:makeIndicator(battle, player, type, value)
 
     local x, y
     if player.id == 1 then
-        x, y = prox.window.getWidth()-55, prox.window.getHeight()-55
+        x, y = 530, 310
     else
-        x, y = 55, 55
+        x, y = 60, 50
     end
     local targetx, targety = x, y-5
 
