@@ -1,6 +1,6 @@
---- Card effect discarding from hand
--- @classmod cards.effects.Discard
-local Discard = class("cards.effect.Discard")
+--- Effect discarding from hand
+-- @classmod battle.effects.Discard
+local Discard = class("battle.effect.Discard")
 
 function Discard:initialize(count)
     self.type = "discard"

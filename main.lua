@@ -1,7 +1,7 @@
 prox = require("prox")
 require("luafun.fun")()
 
-local Parser = require("cards.Parser")
+local Parser = require("core.Parser")
 AssetManager = require("core.AssetManager")
 
 local function readDeckFile(path, card_index)
@@ -31,6 +31,7 @@ function prox.load()
 
     local parser = Parser()
     local card_index = parser:readCards("data/cards.csv")
+    local gear_index = parser:readGear("data/gear.csv")
     local deck = readDeckFile("data/decks/test1.csv", card_index)
 
     prox.engine:addSystem(require("systems.battle.BattleSystem")())
@@ -42,8 +43,15 @@ function prox.load()
     prox.engine:addSystem(bls, "update")
     prox.engine:addSystem(bls, "draw")
 
-    local player = require("components.battle.Player")(1, "Anders", deck)
-    local enemy = require("components.battle.Player")(2, "Preben", deck, require("ai.RandomAI")())
+    local gear = {
+        gear_index.gloves,
+        gear_index.lederhosen,
+        gear_index.sweatpants
+        --gear_index.tophat
+    }
+
+    local player = require("components.battle.Player")(1, "You", deck, gear)
+    local enemy = require("components.battle.Player")(2, "Bubber", deck, gear, require("ai.RandomAI")())
 
     local cam = Entity()
     cam:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2))

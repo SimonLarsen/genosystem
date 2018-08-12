@@ -1,7 +1,7 @@
 --- Condition for card action
--- @classmod cards.Condition
+-- @classmod battle.Condition
 
-local Condition = class("cards.Condition")
+local Condition = class("battle.Condition")
 
 local operators = {
     [">"]  = function(a, b) return a > b end,

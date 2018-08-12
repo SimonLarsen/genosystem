@@ -1,7 +1,7 @@
---- Card effect dealing damage
--- @classmod cards.effects.Hit
+--- Effect dealing damage
+-- @classmod battle.effects.Hit
 
-local Hit = class("cards.effects.Hit")
+local Hit = class("battle.effects.Hit")
 
 function Hit:initialize(count)
     self.type = "hit"

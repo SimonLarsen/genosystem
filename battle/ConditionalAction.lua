@@ -1,12 +1,12 @@
 --- Conditional card action
--- @classmod cards.ConditionalAction
+-- @classmod battle.ConditionalAction
 
-local ConditionalAction = class("cards.ConditionalAction")
+local ConditionalAction = class("battle.ConditionalAction")
 
 --- Constructor.
--- @param condition @{cards.Condition} object.
--- @param ifaction @{cards.Action} to apply if `condition` is true.
--- @param elseaction (optional) @{cards.Action} to apply if `condition` is false.
+-- @param condition @{battle.Condition} object.
+-- @param ifaction @{battle.Action} to apply if `condition` is true.
+-- @param elseaction (optional) @{battle.Action} to apply if `condition` is false.
 function ConditionalAction:initialize(condition, ifaction, elseaction)
     self.condition = condition
     self.ifaction = ifaction

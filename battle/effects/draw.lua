@@ -1,6 +1,6 @@
---- Card effect drawing cards
--- @classmod cards.effects.Draw
-local Draw = class("cards.effects.Draw")
+--- Effect drawing cards
+-- @classmod battle.effects.Draw
+local Draw = class("battle.effects.Draw")
 
 function Draw:initialize(count)
     self.type = "draw"

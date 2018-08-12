@@ -2,7 +2,6 @@
 -- @classmod battle.Effect
 local Effect = class("battle.Effect")
 
-
 --- Constructor.
 -- @param target (string) Target of action.
 -- @param reactive True if effect is applied reactively.

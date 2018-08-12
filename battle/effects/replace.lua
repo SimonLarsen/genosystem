@@ -1,7 +1,7 @@
---- Card effect replacing cards in hand with tokens
--- @classmod cards.effects.Replace
+--- Effect replacing cards in hand with tokens
+-- @classmod battle.effects.Replace
 
-local Replace = class("cards.effects.Replace")
+local Replace = class("battle.effects.Replace")
 
 function Replace:initialize(count, card)
     self.type = "replace"

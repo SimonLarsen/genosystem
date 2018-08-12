@@ -8,9 +8,8 @@ local Hand = require("components.battle.Hand")
 local Indicator = require("components.battle.Indicator")
 
 local Effect = require("battle.Effect")
-local DrawEffect = require("cards.effects.draw")
+local DrawEffect = require("battle.effects.draw")
 
-local SelectTargetEvent = require("events.SelectTargetEvent")
 local PlayCardEvent = require("events.PlayCardEvent")
 local BattleLogEvent = require("events.BattleLogEvent")
 
@@ -31,11 +30,6 @@ function BattleSystem:update(dt)
     local font_text = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
     local font_title = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 13)
     local font_huge = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 32)
-
-    local img_portrait = prox.resources.getImage("data/images/portrait.png")
-    local img_icon_deck = prox.resources.getImage("data/images/icons/deck.png")
-    local img_icon_discard = prox.resources.getImage("data/images/icons/discard.png")
-    local img_icon_wounded = prox.resources.getImage("data/images/icons/wounded.png")
 
     prox.resources.setFont(font_text)
 
@@ -104,27 +98,42 @@ function BattleSystem:update(dt)
 
     prox.gui.Label(prox.string.trim(string.rep("Ø\n", battle.actions)), {font=font_title, align="center"}, prox.window.getWidth()-124, prox.window.getHeight()/2-50, 16, 100)
 
-    -- portraits
-    prox.gui.Image(img_portrait, prox.window.getWidth()-92, prox.window.getHeight()-92)
-    prox.gui.Image(img_portrait, 18, 18)
+    self:drawPlayerOverlay(battle, 1)
+    self:drawPlayerOverlay(battle, 2)
+end
 
-    -- pile size icons
-    prox.gui.Image(img_icon_deck, prox.window.getWidth()-150, prox.window.getHeight()-92)
-    prox.gui.Image(img_icon_discard, prox.window.getWidth()-150, prox.window.getHeight()-64)
-    prox.gui.Image(img_icon_wounded, prox.window.getWidth()-153, prox.window.getHeight()-37)
+function BattleSystem:drawPlayerOverlay(battle, player)
+    local font_title = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 14)
+    local left = (2 - player) * (prox.window.getWidth() - 170)
+    local top = (2 - player) * (prox.window.getHeight() - 100)
 
-    prox.gui.Image(img_icon_deck, 114, 16)
-    prox.gui.Image(img_icon_discard, 114, 45)
-    prox.gui.Image(img_icon_wounded, 111, 72)
+    local img_portrait = prox.resources.getImage("data/images/portrait.png")
+    local img_icon_deck = prox.resources.getImage("data/images/icons/deck.png")
+    local img_icon_discard = prox.resources.getImage("data/images/icons/discard.png")
 
-    -- pile size numbers
-    prox.gui.Label(tostring(#battle.players[1].deck),    {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-91, 100, 16)
-    prox.gui.Label(tostring(#battle.players[1].discard), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-63, 100, 16)
-    prox.gui.Label(tostring(#battle.players[1].wounded), {font=font_title, align="left"}, prox.window.getWidth()-128, prox.window.getHeight()-35, 100, 16)
+    prox.gui.Image(img_portrait, left+23, top+13)
 
-    prox.gui.Label(tostring(#battle.players[2].deck),    {font=font_title, align="left"}, 135, 18, 100, 16)
-    prox.gui.Label(tostring(#battle.players[2].discard), {font=font_title, align="left"}, 135, 46, 100, 16)
-    prox.gui.Label(tostring(#battle.players[2].wounded), {font=font_title, align="left"}, 135, 74, 100, 16)
+    prox.gui.Image(img_icon_deck, left+113, top+23)
+    prox.gui.Image(img_icon_discard, left+113, top+57)
+
+    prox.gui.Label(tostring(#battle.players[2].deck),    {font=font_title, align="left"}, left+132, top+25, 100, 16)
+    prox.gui.Label(tostring(#battle.players[2].discard), {font=font_title, align="left"}, left+132, top+59, 100, 16)
+
+    left = (player - 1) * (prox.window.getWidth() - 170)
+
+    local img_destroyed = prox.resources.getImage(AssetManager.static.DESTROYED_GEAR_PATH)
+    for i=1,3 do
+        local slot = battle.players[player].gear[i]
+        local path = AssetManager.getGearImagePath(slot.item.id)
+        local img = prox.resources.getImage(path)
+        prox.gui.Image(img, left+10+(i-1)*50, top+20)
+        if slot.destroyed then
+            prox.gui.Image(img_destroyed, left+10+(i-1)*50, top+20)
+        end
+
+        local hptext = (slot.item.hp - slot.damage) .. "/" .. slot.item.hp
+        prox.gui.Label(hptext, {font=font_title, align="center"}, left+10+(i-1)*50, top+65, 50, 25)
+    end
 end
 
 function BattleSystem:onPlayCard(event)
@@ -198,7 +207,7 @@ end
 
 --- Execute card's active effects.
 -- @param battle Current @{components.battle.Battle} instance.
--- @param card @{cards.Card} instance to play.
+-- @param card @{core.Card} instance to play.
 -- @param variables Table of current battle variables.
 function BattleSystem:playCard(battle, card, variables)
     assert(#battle.effects == 0, "Card active effect played while effects queue is not empty.")
@@ -209,7 +218,7 @@ end
 
 --- Execute card's reactive effects.
 -- @param battle Current @{components.battle.Battle} instance.
--- @param card @{cards.Card} instance to play.
+-- @param card @{core.Card} instance to play.
 -- @param variables Table of current battle variables.
 function BattleSystem:reactCard(battle, card, variables)
     local top_effects = {}
@@ -290,7 +299,6 @@ function BattleSystem:effectDrawCards(battle, player, count, silent)
         table.insert(player.hand, card)
     end
 
-    --self:makeIndicator(battle, player, Indicator.static.TYPE_DRAW, count)
     if not silent then
         prox.events:fireEvent(BattleLogEvent(string.format("%s drew %d cards.", player.name, count)))
     end
@@ -347,18 +355,6 @@ function BattleSystem:effectReplaceCards(battle, player, card_id, count)
 
     self:effectDealCards(battle, player, card_id, "hand", count)
     prox.events:fireEvent(BattleLogEvent(string.format("%s had %d cards replaced with %s tokens.", player.name, count, card.name)))
-end
-
-function BattleSystem:effectRestoreCards(battle, player, count)
-    count = math.min(count, #player.wounded)
-    for i=1, count do
-        local card = player.wounded[1]
-        table.remove(player.wounded, 1)
-        table.insert(player.discard, 1, card)
-    end
-
-    self:makeIndicator(battle, player, Indicator.static.TYPE_RESTORE, count)
-    prox.events:fireEvent(BattleLogEvent(string.format("%s restored %d wounded cards.", player.name, count)))
 end
 
 function BattleSystem:effectGainActions(battle, player, count)

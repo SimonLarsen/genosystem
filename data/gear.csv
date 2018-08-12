@@ -1,0 +1,5 @@
+id,name,hp,trigger,effect,description
+lederhosen,Lederhosen,15,reveal,enemy hit 4,"Stupid, sexy leather pants"
+gloves,Leather gloves,6,active,self draw 1,Jaja nejnej okay
+tophat,Top hat,20,destroy,self hit 4,Fed hat mor
+sweatpants,Kogte joggingbukser,4,attacked,enemy replace 3 blank,Meget varme og meget våde bukser

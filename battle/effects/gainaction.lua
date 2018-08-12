@@ -1,7 +1,7 @@
---- Card effect gaining new actions
--- @classmod cards.effects.GainAction
+--- Effect gaining new actions
+-- @classmod battle.effects.GainAction
 
-local GainAction = class("cards.effects.GainAction")
+local GainAction = class("battle.effects.GainAction")
 
 function GainAction:initialize(count)
     self.type = "gainaction"

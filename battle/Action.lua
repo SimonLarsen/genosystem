@@ -1,6 +1,6 @@
 --- Unconditional card action
--- @classmod cards.Action
-local Action = class("cards.Action")
+-- @classmod battle.Action
+local Action = class("battle.Action")
 
 local Effect = require("battle.Effect")
 

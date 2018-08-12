@@ -5,23 +5,28 @@ local Player = class("components.battle.Player")
 local Pile = require("battle.Pile")
 
 --- Constructor.
--- @param id Index of player {1,2}.
--- @param name Display name of the player.
--- @param deck Player deck. Table of @{cards.Card} objects
--- @param ai AI components if player is non-player controlled.
-function Player:initialize(id, name, deck, ai)
+-- @param id Index of player {1,2}
+-- @param name Display name of the player
+-- @param deck Player deck. Table of @{core.Card} objects
+-- @param gear Player gear. A table of @{core.Gear} objects
+-- @param ai AI components if player is non-player controlled
+function Player:initialize(id, name, deck, gear, ai)
     self.id = id
     self.name = name
 
     self.hand = {}
     self.discard = {}
     self.deck = {}
-    self.wounded = {}
+    self.gear = {}
     self.alive = true
     self.ai = ai
 
     for i,v in pairs(deck) do
         table.insert(self.deck, v)
+    end
+
+    for i,v in pairs(gear) do
+        table.insert(self.gear, {damage=0, destroyed=false, item=v})
     end
 
     prox.table.shuffle(self.deck)
@@ -59,17 +64,16 @@ function Player:discardCard(i)
 end
 
 function Player:hit(count)
-    local hits = 0
-    for i=1, count do
-        local card = self:draw()
-        if card == nil then
-            self.alive = false
-            return hits
+    for i,v in ipairs(self.gear) do
+        if not v.destroyed then
+            v.damage = v.damage + count
+            if v.damage >= v.item.hp then
+                v.damage = v.item.hp
+                v.destroyed = true
+            end
+            break
         end
-        table.insert(self.wounded, 1, card)
-        hits = hits+1
     end
-    return hits
 end
 
 function Player:isAI()

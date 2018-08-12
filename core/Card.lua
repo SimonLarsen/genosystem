@@ -1,7 +1,7 @@
 --- Card description class.
--- @classmod cards.Card
+-- @classmod core.Card
 
-local Card = class("cards.Card")
+local Card = class("core.Card")
 
 --- Constructor.
 -- @param id (strings) Card ID
@@ -9,19 +9,17 @@ local Card = class("cards.Card")
 -- @param token (boolean) Is the card a token type
 -- @param type (string) Card type
 -- @param buy (number) Buy cost
--- @param scrap (number) Scrap cost
 -- @param block (number) Block value (or nil)
 -- @param active Active card effect tree
 -- @param reactive Reactive card effect tree
 -- @param text (string) Card effect description
 -- @param description (string) Long card lore description
-function Card:initialize(id, name, token, type, buy, scrap, block, active, reactive, text, description)
+function Card:initialize(id, name, token, type, buy, block, active, reactive, text, description)
     self.id = id
     self.name = name
     self.token = token
     self.type = type
     self.buy = buy
-    self.scrap = scrap
     self.block = block
     self.active = active
     self.reactive = reactive

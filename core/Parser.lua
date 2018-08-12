@@ -1,20 +1,21 @@
 --- Card effect description parser
--- @classmod cards.Parser
+-- @classmod core.Parser
 
-local Card = require("cards.Card")
-local Action = require("cards.Action")
-local Condition = require("cards.Condition")
-local ConditionalAction = require("cards.ConditionalAction")
+local Card = require("core.Card")
+local Gear = require("core.Gear")
+local Action = require("battle.Action")
+local Condition = require("battle.Condition")
+local ConditionalAction = require("battle.ConditionalAction")
 
-local Parser = class("cards.Parser")
+local Parser = class("core.Parser")
 
 local function parseEffects()
     local effects = {}
 
-    for i, f in ipairs(love.filesystem.getDirectoryItems("cards/effects")) do
+    for i, f in ipairs(love.filesystem.getDirectoryItems("battle/effects")) do
         if prox.string.endswith(f, ".lua") then
             local name = string.sub(f, 1, #f-4)
-            local e = require("cards.effects." .. name)
+            local e = require("battle.effects." .. name)
             assert(effects[name] == nil, "Effect type \"" .. name .. "\" already defined.")
             effects[name] = e
         end
@@ -92,7 +93,7 @@ end
 
 --- Parse a card effect description.
 -- @param s (string) Card effect description.
--- @return Description as an @{cards.Action} tree
+-- @return Description as an @{battle.Action} tree
 function Parser:parse(s)
     if prox.string.trim(s) == "" then
         return {}
@@ -105,7 +106,7 @@ end
 
 --- Parses cards from a CSV file database.
 -- @param path (string) Path to CSV file
--- @return A table mapping card IDs to @{cards.Card} instances.
+-- @return A table mapping card IDs to @{core.Card} instances.
 function Parser:readCards(path)
     local csv = require("lua-csv.lua.csv")
 
@@ -119,7 +120,6 @@ function Parser:readCards(path)
             toboolean(e.token),
             e.type,
             tonumber(e.buy),
-            tonumber(e.scrap),
             tonumber(e.block),
             self:parse(e.active),
             self:parse(e.reactive),
@@ -129,6 +129,29 @@ function Parser:readCards(path)
         cards[e.id] = c
     end
     return cards
+end
+
+--- Parses gear from a CSV file database.
+-- @param path (string) Path to CSV file
+-- @return A table mapping gear IDs to @{core.Gear} instances
+function Parser:readGear(path)
+    local csv = require("lua-csv.lua.csv")
+
+    local data = love.filesystem.read(path)
+    local f = csv.openstring(data, {header=true})
+    local gear = {}
+    for e in f:lines() do
+        local g = Gear(
+            e.id,
+            e.name,
+            tonumber(e.hp),
+            e.trigger,
+            self:parse(e.effect),
+            e.description
+        )
+        gear[e.id] = g
+    end
+    return gear
 end
 
 return Parser

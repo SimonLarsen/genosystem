@@ -3,7 +3,7 @@
 local Pile = class("battle.Pile")
 
 --- Constructor.
--- @param cards (optional) Table of @{cards.Card} to add to pile
+-- @param cards (optional) Table of @{core.Card} to add to pile
 function Pile:initialize(cards)
     if cards then
         self._cards = prox.table.copy(cards)
@@ -13,13 +13,13 @@ function Pile:initialize(cards)
 end
 
 --- Add card to pile.
--- @param card @{cards.Card} instance of card to add to top of pile.
+-- @param card @{core.Card} instance of card to add to top of pile.
 function Pile:addCard(card)
     table.insert(self._cards, 1, card)
 end
 
 --- Add stack of cards to pile.
--- @param cards Table of @{cards.Card} instances to add to top of pile. First card in stack will be added on top.
+-- @param cards Table of @{core.Card} instances to add to top of pile. First card in stack will be added on top.
 function Pile:addCards(cards)
     for i=#cards,1,-1 do
         self:addCard(cards[i])
