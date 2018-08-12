@@ -2,8 +2,9 @@
 -- @classmod components.battle.BattleLog
 local BattleLog = class("components.battle.BattleLog")
 
-function BattleLog:initialize(card_index, x, y, w, h)
+function BattleLog:initialize(card_index, gear_index, x, y, w, h)
     self.card_index = card_index
+    self.gear_index = gear_index
     self.messages = {}
     self.x = x or 5
     self.y = y or prox.window.getHeight()/2 - 60
@@ -15,6 +16,7 @@ function BattleLog:initialize(card_index, x, y, w, h)
     self.text_height = 0
     self.locked = true
     self.font = prox.resources.getFont("data/fonts/FiraSans-Medium.ttf", 10)
+    self.hover = nil
 end
 
 return BattleLog

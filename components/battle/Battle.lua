@@ -9,16 +9,17 @@ Battle.static.STATE_REACT        = 3
 Battle.static.STATE_REACT_DAMAGE = 4
 
 --- Constructor.
+-- @param card_index
+-- @param gear_index
 -- @param player1 First @{components.battle.Player} instance.
 -- @param player2 Second @{components.battle.Player} instance.
 -- @param hand1 @{components.battle.Hand} instance for first player.
 -- @param hand2 @{components.battle.Hand} instance for second player.
--- @param card_index Table of all cards.
-function Battle:initialize(player1, player2, hand1, hand2, card_index)
+function Battle:initialize(card_index, gear_index, player1, player2, hand1, hand2)
+    self.card_index = card_index
+    self.gear_index = gear_index
     self.players = {player1, player2}
     self.hands = {hand1, hand2}
-
-    self.card_index = card_index
 
     self.state = Battle.static.STATE_INIT
     self.phase = Battle.static.PHASE_ACTIVE

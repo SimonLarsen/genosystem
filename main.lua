@@ -43,15 +43,12 @@ function prox.load()
     prox.engine:addSystem(bls, "update")
     prox.engine:addSystem(bls, "draw")
 
-    local gear = {
-        gear_index.gloves,
-        gear_index.lederhosen,
-        gear_index.sweatpants
-        --gear_index.tophat
-    }
+    prox.engine:addSystem(require("systems.battle.DescriptionBoxSystem")())
+
+    local gear = {gear_index.gloves, gear_index.lederhosen, gear_index.sweatpants}
 
     local player = require("components.battle.Player")(1, "You", deck, gear)
-    local enemy = require("components.battle.Player")(2, "Bubber", deck, gear, require("ai.RandomAI")())
+    local enemy = require("components.battle.Player")(2, "Enemy", deck, gear, require("ai.RandomAI")())
 
     local cam = Entity()
     cam:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2))
@@ -70,14 +67,18 @@ function prox.load()
 
     local battle = Entity()
     battle:add(require("components.battle.Battle")(
+        card_index, gear_index,
         player, enemy,
         player_hand:get("components.battle.Hand"),
-        enemy_hand:get("components.battle.Hand"),
-        card_index
+        enemy_hand:get("components.battle.Hand")
     ))
     prox.engine:addEntity(battle)
 
     local battle_log = Entity()
-    battle_log:add(require("components.battle.BattleLog")(card_index))
+    battle_log:add(require("components.battle.BattleLog")(card_index, gear_index))
     prox.engine:addEntity(battle_log)
+
+    local description_box = Entity()
+    description_box:add(require("components.battle.DescriptionBox")(card_index, gear_index))
+    prox.engine:addEntity(description_box)
 end

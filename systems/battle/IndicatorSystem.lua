@@ -33,7 +33,7 @@ function IndicatorSystem:update(dt)
         local imgw, imgh = img:getDimensions()
         local x,y = math.floor(t.x+0.5), math.floor(t.y+0.5)
         love.graphics.setColor(1, 1, 1, indicator.alpha)
-        prox.gui.Image(img, x-imgw/2, y-imgh/2)
+        prox.gui.ImageButton(img, x-imgw/2, y-imgh/2)
         love.graphics.setColor(1, 1, 1, 1)
 
         color.normal.fg[4] = indicator.alpha

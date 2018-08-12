@@ -12,6 +12,7 @@ local DrawEffect = require("battle.effects.draw")
 
 local PlayCardEvent = require("events.PlayCardEvent")
 local BattleLogEvent = require("events.BattleLogEvent")
+local DescriptionBoxEvent = require("events.DescriptionBoxEvent")
 
 local MAX_ACTIONS = 3
 local HAND_SIZE = 5
@@ -89,10 +90,10 @@ function BattleSystem:update(dt)
                 self:endReact(battle)
             end
         end
-        prox.gui.Label("Damage: " .. battle.damage, {font=font_title, align="right"}, prox.window.getWidth()-216, prox.window.getHeight()/2-32)
 
     elseif battle.state == Battle.static.STATE_REACT_DAMAGE then
         self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
+        battle.damage = 0
         battle.state = Battle.static.STATE_PLAY
     end
 
@@ -100,6 +101,11 @@ function BattleSystem:update(dt)
 
     self:drawPlayerOverlay(battle, 1)
     self:drawPlayerOverlay(battle, 2)
+
+    if battle.damage > 0 and battle.state ~= Battle.static.STATE_REACT_DAMAGE then
+        prox.gui.Label("React damage:", {font=font_title, align="center"}, prox.window.getWidth()/2-100, prox.window.getHeight()/2-32, 200, 32)
+        prox.gui.Label(tostring(battle.damage), {font=font_huge, align="center"}, prox.window.getWidth()/2-100, prox.window.getHeight()/2, 200, 32)
+    end
 end
 
 function BattleSystem:drawPlayerOverlay(battle, player)
@@ -111,10 +117,10 @@ function BattleSystem:drawPlayerOverlay(battle, player)
     local img_icon_deck = prox.resources.getImage("data/images/icons/deck.png")
     local img_icon_discard = prox.resources.getImage("data/images/icons/discard.png")
 
-    prox.gui.Image(img_portrait, left+23, top+13)
+    prox.gui.ImageButton(img_portrait, left+23, top+13)
 
-    prox.gui.Image(img_icon_deck, left+113, top+23)
-    prox.gui.Image(img_icon_discard, left+113, top+57)
+    prox.gui.ImageButton(img_icon_deck, left+113, top+23)
+    prox.gui.ImageButton(img_icon_discard, left+113, top+57)
 
     prox.gui.Label(tostring(#battle.players[2].deck),    {font=font_title, align="left"}, left+132, top+25, 100, 16)
     prox.gui.Label(tostring(#battle.players[2].discard), {font=font_title, align="left"}, left+132, top+59, 100, 16)
@@ -126,9 +132,17 @@ function BattleSystem:drawPlayerOverlay(battle, player)
         local slot = battle.players[player].gear[i]
         local path = AssetManager.getGearImagePath(slot.item.id)
         local img = prox.resources.getImage(path)
-        prox.gui.Image(img, left+10+(i-1)*50, top+20)
+
+        local button_id = string.format("gear_%d_%d", player, i)
+        local s = prox.gui.ImageButton(img, {id=button_id}, left+10+(i-1)*50, top+20)
+        if s.entered then
+            prox.events:fireEvent(DescriptionBoxEvent(true, button_id, "gear", slot.item.id))
+        elseif s.left then
+            prox.events:fireEvent(DescriptionBoxEvent(false, button_id))
+        end
+
         if slot.destroyed then
-            prox.gui.Image(img_destroyed, left+10+(i-1)*50, top+20)
+            prox.gui.ImageButton(img_destroyed, left+10+(i-1)*50, top+20)
         end
 
         local hptext = (slot.item.hp - slot.damage) .. "/" .. slot.item.hp

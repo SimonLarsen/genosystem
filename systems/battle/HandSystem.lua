@@ -4,6 +4,7 @@ local HandSystem = class("systems.battle.HandSystem", System)
 
 local Hand = require("components.battle.Hand")
 local PlayCardEvent = require("events.PlayCardEvent")
+local DescriptionBoxEvent = require("events.DescriptionBoxEvent")
 
 local MAX_WIDTH = 225
 
@@ -76,14 +77,20 @@ function HandSystem:update(dt)
         end
 
         if hover_card then
-            local card = hand.cards[hover_card]
-            local cc = card:get("components.battle.Card").card
-            local t = card:get("Transform")
-            prox.gui.Label(cc:getText(), prox.window.getWidth()/2-120, prox.window.getHeight()/2-20, 240, 60)
-            prox.gui.Label(cc.name, {font=title_font}, prox.window.getWidth()/2-60, prox.window.getHeight()/2-40, 120, 20)
-
+            if hover_card ~= hand.hover_card then
+                local id = hand.cards[hover_card]:get("components.battle.Card").card.id
+                prox.events:fireEvent(DescriptionBoxEvent(true, "hand", "card", id))
+                hand.hover_card = hover_card
+            end
             if prox.mouse.wasPressed(1) then
                 prox.events:fireEvent(PlayCardEvent(hand.player, hover_card))
+                prox.events:fireEvent(DescriptionBoxEvent(false, "hand"))
+                hand.hover_card = nil
+            end
+        else
+            if hand.hover_card then
+                prox.events:fireEvent(DescriptionBoxEvent(false, "hand"))
+                hand.hover_card = nil
             end
         end
     end

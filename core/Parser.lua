@@ -147,6 +147,7 @@ function Parser:readGear(path)
             tonumber(e.hp),
             e.trigger,
             self:parse(e.effect),
+            e.text,
             e.description
         )
         gear[e.id] = g

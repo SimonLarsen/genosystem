@@ -14,6 +14,7 @@ function Hand:initialize(player)
     self.cards = {}
     self.player = player
     self.state = Hand.static.STATE_INACTIVE
+    self.hover_card = nil
 end
 
 return Hand

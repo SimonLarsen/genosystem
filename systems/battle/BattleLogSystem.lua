@@ -67,8 +67,8 @@ function BattleLogSystem:draw()
         local y = log.y - scroll + log.margin
 
         for _, s in ipairs(log.messages) do
-            love.graphics.printf(s, log.x+log.margin, y, log.w - 2*log.margin, "left")
-            local linewidth, lines = log.font:getWrap(s, log.w-2*log.margin)
+            love.graphics.printf(s.text, log.x+log.margin, y, log.w - 2*log.margin, "left")
+            local linewidth, lines = log.font:getWrap(s.text, log.w-2*log.margin)
             y = y + log.font:getHeight() * #lines + 4
         end
         love.graphics.setStencilTest()
@@ -92,7 +92,7 @@ function BattleLogSystem:onMessage(event)
         if #log.messages > 0 then
             log.text_height = log.text_height + log.spacing
         end
-        table.insert(log.messages, event.text)
+        table.insert(log.messages, event)
     end
 end
 
