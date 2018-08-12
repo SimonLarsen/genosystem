@@ -63,6 +63,8 @@ function Player:discardCard(i)
     return card
 end
 
+--- Deal damage to player.
+-- @param count Number of hit point to deal.
 function Player:hit(count)
     for i,v in ipairs(self.gear) do
         if not v.destroyed then

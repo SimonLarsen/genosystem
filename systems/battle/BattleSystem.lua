@@ -167,8 +167,8 @@ function BattleSystem:onPlayCard(event)
 
         local e_flash = Entity()
         e_flash:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2, -1))
-        e_flash:add(prox.Tween())
         e_flash:add(prox.Sprite({image="data/images/card_flash.png", color={1,1,1,0}}))
+        e_flash:add(prox.Tween())
         e_flash:get("Tween"):add(0.05, e_flash:get("Sprite"), {color={1,1,1,1}}, "inQuad", 0.75)
         e_flash:get("Tween"):add(0.30, e_flash:get("Sprite"), {color={1,1,1,0}, sx=1.4, sy=1.4}, "outQuad", 0.80)
         e_flash:add(prox.RemoveAfterTime(1.1))
@@ -195,9 +195,27 @@ function BattleSystem:onPlayCard(event)
         if not card:isToken() then
             table.insert(player.discard, 1, card)
         end
-        prox.engine:removeEntity(hand.cards[event.card])
+
+        local e = hand.cards[event.card]
         table.remove(hand.cards, event.card)
 
+        e:get("Transform").z = 0
+        e:get("Tween"):add(0.5, e:get("Transform"), {x=prox.window.getWidth()/2, y=prox.window.getHeight()/2}, "inOutQuad")
+        e:get("Tween"):add(0.5, e:get("components.battle.Card"), {zoom=1.3}, "outQuad")
+        e:get("Tween"):add(0.2, e:get("components.battle.Card"), {zoom=1.0}, "outQuad", 0.5)
+        e:get("Tween"):add(0.4, e:get("components.battle.Card"), {dir=2}, "outQuad", 0.2)
+        e:add(prox.RemoveAfterTime(0.8))
+
+        local e_flash = Entity()
+        e_flash:add(prox.Transform(prox.window.getWidth()/2, prox.window.getHeight()/2, -1))
+        e_flash:add(prox.Sprite({image="data/images/card_flash.png", color={1,1,1,0}}))
+        e_flash:add(prox.Tween())
+        e_flash:get("Tween"):add(0.05, e_flash:get("Sprite"), {color={1,1,1,1}}, "inQuad", 0.75)
+        e_flash:get("Tween"):add(0.30, e_flash:get("Sprite"), {color={1,1,1,0}, sx=1.4, sy=1.4}, "outQuad", 0.80)
+        e_flash:add(prox.RemoveAfterTime(1.1))
+        prox.engine:addEntity(e_flash)
+
+        self:wait(battle, 1.0)
         hand.state = Hand.static.STATE_INACTIVE
         battle.state = Battle.static.STATE_REACT_DAMAGE
 
