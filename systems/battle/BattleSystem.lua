@@ -69,7 +69,11 @@ function BattleSystem:update(dt)
                 self:endTurn(battle)
             else
                 local decision = battle:currentPlayer().ai:play(battle:currentPlayer(), battle:opponentPlayer())
-                self:onPlayCard(PlayCardEvent(battle.current_player, decision))
+                if decision then
+                    self:onPlayCard(PlayCardEvent(battle.current_player, decision))
+                else
+                    self:endTurn(battle)
+                end
             end
         else
             if prox.gui.Button("End turn", {font=font_title}, prox.window.getWidth()-110, prox.window.getHeight()/2-40, 100, 80).hit then
