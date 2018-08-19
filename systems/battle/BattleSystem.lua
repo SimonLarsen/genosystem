@@ -51,9 +51,14 @@ function BattleSystem:update(dt)
         battle.state = Battle.static.STATE_PREPARE
 
     elseif battle.state == Battle.static.STATE_PREPARE then
-        table.insert(battle.effects, Effect("self", false, DrawEffect(HAND_SIZE-#battle:currentPlayer().hand)))
-        battle.state = Battle.static.STATE_PLAY
-        battle.actions = MAX_ACTIONS
+        local slot = battle:currentPlayer():currentGear()
+        if slot and slot.revealed and not slot.destroyed then
+            if slot.item.trigger == "active" then
+                self:triggerGear(battle, battle:currentPlayer())
+            end
+        end
+
+        table.insert(battle.effects, 1, Effect(battle:currentPlayer(), false, DrawEffect(HAND_SIZE-#battle:currentPlayer().hand)))
 
         for i, hand in ipairs(battle.hands) do
             if i == battle.current_player then
@@ -62,6 +67,9 @@ function BattleSystem:update(dt)
                 hand.state = Hand.static.STATE_INACTIVE
             end
         end
+
+        battle.actions = MAX_ACTIONS
+        battle.state = Battle.static.STATE_PLAY
 
     elseif battle.state == Battle.static.STATE_PLAY then
         if battle:currentPlayer():isAI() then
@@ -170,8 +178,7 @@ function BattleSystem:onPlayCard(event)
         local card = player.hand[event.card]
         local hand = battle.hands[event.player]
 
-        local variables = {}
-        self:playCard(battle, card, {})
+        self:playCard(battle, card)
 
         table.remove(player.hand, event.card)
         if not card:isToken() then
@@ -211,8 +218,7 @@ function BattleSystem:onPlayCard(event)
 
         battle.damage = math.max(battle.damage - card.block, 0)
 
-        local variables = {}
-        self:reactCard(battle, card, {})
+        self:reactCard(battle, card)
 
         table.remove(player.hand, event.card)
         if not card:isToken() then
@@ -249,22 +255,41 @@ end
 --- Execute card's active effects.
 -- @param battle Current @{components.battle.Battle} instance.
 -- @param card @{core.Card} instance to play.
--- @param variables Table of current battle variables.
-function BattleSystem:playCard(battle, card, variables)
+function BattleSystem:playCard(battle, card)
     assert(#battle.effects == 0, "Card active effect played while effects queue is not empty.")
+    local targets = { self = battle:currentPlayer(), enemy = battle:opponentPlayer() }
+    local variables = nil
     for _, v in ipairs(card.active) do
-        v:apply(variables, false, battle.effects)
+        v:apply(variables, targets, true, battle.effects)
     end
 end
 
 --- Execute card's reactive effects.
 -- @param battle Current @{components.battle.Battle} instance.
 -- @param card @{core.Card} instance to play.
--- @param variables Table of current battle variables.
-function BattleSystem:reactCard(battle, card, variables)
+function BattleSystem:reactCard(battle, card)
     local top_effects = {}
+    local targets = { self = battle:opponentPlayer(), enemy = battle:currentPlayer() }
+    local variables = nil
     for _, v in ipairs(card.reactive) do
-        v:apply(variables, true, top_effects)
+        v:apply(variables, targets, false, top_effects)
+    end
+    for i=#top_effects, 1, -1 do
+        table.insert(battle.effects, 1, top_effects[i])
+    end
+end
+
+function BattleSystem:triggerGear(battle, player)
+    local top_effects = {}
+    local targets
+    if player == battle:currentPlayer() then
+        targets = { self = battle:currentPlayer(), enemy = battle:opponentPlayer() }
+    else
+        targets = { self = battle:opponentPlayer(), enemy = battle:currentPlayer() }
+    end
+    local variables = nil
+    for _, v in ipairs(player:currentGear().item.effect) do
+        v:apply(variables, targets, false, top_effects)
     end
     for i=#top_effects, 1, -1 do
         table.insert(battle.effects, 1, top_effects[i])
@@ -297,10 +322,10 @@ function BattleSystem:resolve(battle)
     local e = battle.effects[1]
     table.remove(battle.effects, 1)
 
-    local target = self:getTarget(battle, e.target, e.reactive)
+    local target = e.target
     local effect = e.effect
-
     local type = effect.type
+
     if type == "deal" then
         self:effectDealCards(battle, target, effect.card, effect.pile, effect.count)
     elseif type == "draw" then
@@ -308,7 +333,7 @@ function BattleSystem:resolve(battle)
     elseif type == "discard" then
         self:effectDiscardCards(battle, target, effect.count)
     elseif type == "hit" then
-        if not e.reactive and e.target == "enemy" and self:playerCanBlock(target) then
+        if e.can_react and self:playerCanBlock(target) and target == battle:opponentPlayer() then
             battle.damage = effect.count
             battle:opponentHand().state = Hand.static.STATE_REACT
             battle.state = Battle.static.STATE_REACT
@@ -406,7 +431,27 @@ end
 
 function BattleSystem:hitPlayer(battle, player, damage)
     local hand = battle.hands[player.id]
-    local hits = player:hit(damage)
+    local slot = player:currentGear()
+    assert(slot, "Player hit without any gear left.")
+
+    if not slot.revealed then
+        slot.revealed = true
+        if slot.item.trigger == "revealed" then
+            self:triggerGear(battle, player)
+        end
+    end
+
+    slot.damage = slot.damage + damage
+    if slot.damage >= slot.item.hp then
+        slot.damage = slot.item.hp
+        slot.destroyed = true
+    end
+
+    if slot.item.trigger == "attacked"
+    or slot.destroyed and slot.item.trigger == "destroyed" then
+        self:triggerGear(battle, player)
+    end
+
     self:makeIndicator(battle, player, Indicator.static.TYPE_DAMAGE, damage)
     prox.events:fireEvent(BattleLogEvent(string.format("%s took %d damage.", player.name, damage)))
 end

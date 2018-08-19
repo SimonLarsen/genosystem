@@ -4,11 +4,11 @@ local Effect = class("battle.Effect")
 
 --- Constructor.
 -- @param target (string) Target of action.
--- @param reactive True if effect is applied reactively.
+-- @param can_react (boolean) True if this effect triggers reactive effects.
 -- @param effect Effect to apply.
-function Effect:initialize(target, reactive, effect)
+function Effect:initialize(target, can_react, effect)
     self.target = target
-    self.reactive = reactive
+    self.can_react = can_react
     self.effect = effect
 end
 

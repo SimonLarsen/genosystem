@@ -14,12 +14,13 @@ end
 
 --- Recursively apply card action, adding effects to queue.
 -- @param variables Table of current battle variables.
--- @param reactive True if effect is applied reactively.
+-- @param targets Table of player targets.
+-- @param can_react True if this effect triggers reactive effects.
 -- @param effects Effect queue.
 -- @return The effects queue.
-function Action:apply(variables, reactive, effects)
+function Action:apply(variables, targets, can_react, effects)
     for i,v in ipairs(self.effects) do
-        table.insert(effects, Effect(self.target, reactive, v:clone()))
+        table.insert(effects, Effect(targets[self.target], can_react, v:clone()))
     end
     return effects
 end

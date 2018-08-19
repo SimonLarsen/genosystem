@@ -63,22 +63,12 @@ function Player:discardCard(i)
     return card
 end
 
---- Deal damage to player.
--- @param count Number of hit point to deal.
-function Player:hit(count)
+--- Get top gear slot.
+-- @return Return gear slot table. Returns `nil` if all gear is destroyed.
+function Player:currentGear()
     for i,v in ipairs(self.gear) do
         if not v.destroyed then
-            if not v.revealed then
-                v.revealed = true
-            end
-
-            v.damage = v.damage + count
-            if v.damage >= v.item.hp then
-                v.damage = v.item.hp
-                v.destroyed = true
-            end
-
-            break
+            return v
         end
     end
 end

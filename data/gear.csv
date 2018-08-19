@@ -1,5 +1,5 @@
 id,name,hp,trigger,effect,text,description
-lederhosen,Lederhosen,15,reveal,enemy hit 4,"Stupid, sexy leather pants",
-gloves,Leather gloves,6,active,self draw 1,Jaja nejnej okay,
-tophat,Top hat,20,destroy,self hit 4,Fed hat mor,
-sweatpants,Kogte joggingbukser,4,attacked,enemy replace 3 blank,Meget varme og meget våde bukser,
+lederhosen,Lederhosen,15,revealed,enemy hit 4,Revealed: Deal 4 damage.,"Stupid, sexy leather pants"
+gloves,Leather gloves,6,active,self draw 1,Active: Draw 1 card.,Jaja nejnej okay
+tophat,Top hat,20,destroyed,self hit 4,Destroyed: Deal 4 damage.,Fed hat mor
+sweatpants,Kogte joggingbukser,4,attacked,enemy replace 3 blank,Attacked: Blank 3 cards in opponent’s hand.,Meget varme og meget våde bukser
