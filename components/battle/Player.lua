@@ -26,7 +26,7 @@ function Player:initialize(id, name, deck, gear, ai)
     end
 
     for i,v in pairs(gear) do
-        table.insert(self.gear, {damage=0, destroyed=false, item=v})
+        table.insert(self.gear, {revealed=false, damage=0, destroyed=false, item=v})
     end
 
     prox.table.shuffle(self.deck)
@@ -68,11 +68,16 @@ end
 function Player:hit(count)
     for i,v in ipairs(self.gear) do
         if not v.destroyed then
+            if not v.revealed then
+                v.revealed = true
+            end
+
             v.damage = v.damage + count
             if v.damage >= v.item.hp then
                 v.damage = v.item.hp
                 v.destroyed = true
             end
+
             break
         end
     end

@@ -5,6 +5,7 @@ local AssetManager = class("core.AssetManager")
 AssetManager.static.MISSING_CARD_PATH = "data/images/cards/_missing_.png"
 AssetManager.static.MISSING_GEAR_PATH = "data/images/gear/_missing_.png"
 AssetManager.static.DESTROYED_GEAR_PATH = "data/images/gear/_destroyed_.png"
+AssetManager.static.HIDDEN_GEAR_PATH = "data/images/gear/_hidden_.png"
 
 --- Retrieve path for card face image.
 -- @param id Unique card ID.

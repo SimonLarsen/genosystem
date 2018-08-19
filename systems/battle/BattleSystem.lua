@@ -96,7 +96,9 @@ function BattleSystem:update(dt)
         end
 
     elseif battle.state == Battle.static.STATE_REACT_DAMAGE then
-        self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
+        if battle.damage > 0 then
+            self:hitPlayer(battle, battle:opponentPlayer(), battle.damage)
+        end
         battle.damage = 0
         battle.state = Battle.static.STATE_PLAY
     end
@@ -132,12 +134,15 @@ function BattleSystem:drawPlayerOverlay(battle, player)
     left = (player - 1) * (prox.window.getWidth() - 170)
 
     local img_destroyed = prox.resources.getImage(AssetManager.static.DESTROYED_GEAR_PATH)
+    local img_hidden = prox.resources.getImage(AssetManager.static.HIDDEN_GEAR_PATH)
+
     for i=1,3 do
         local slot = battle.players[player].gear[i]
         local path = AssetManager.getGearImagePath(slot.item.id)
-        local img = prox.resources.getImage(path)
 
         local button_id = string.format("gear_%d_%d", player, i)
+        local img = slot.revealed and prox.resources.getImage(path) or img_hidden
+
         local s = prox.gui.ImageButton(img, {id=button_id}, left+10+(i-1)*50, top+20)
         if s.entered then
             prox.events:fireEvent(DescriptionBoxEvent(true, button_id, "gear", slot.item.id))
