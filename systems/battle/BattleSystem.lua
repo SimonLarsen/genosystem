@@ -152,10 +152,12 @@ function BattleSystem:drawPlayerOverlay(battle, player)
         local img = slot.revealed and prox.resources.getImage(path) or img_hidden
 
         local s = prox.gui.ImageButton(img, {id=button_id}, left+10+(i-1)*50, top+20)
-        if s.entered then
-            prox.events:fireEvent(DescriptionBoxEvent(true, button_id, "gear", slot.item.id))
-        elseif s.left then
-            prox.events:fireEvent(DescriptionBoxEvent(false, button_id))
+        if player == 1 or slot.revealed then
+            if s.entered then
+                prox.events:fireEvent(DescriptionBoxEvent(true, button_id, "gear", slot.item.id))
+            elseif s.left then
+                prox.events:fireEvent(DescriptionBoxEvent(false, button_id))
+            end
         end
 
         if slot.destroyed then
